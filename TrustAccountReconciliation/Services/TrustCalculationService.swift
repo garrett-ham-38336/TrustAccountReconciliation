@@ -67,6 +67,7 @@ class TrustCalculationService {
         var futureDeposits: Decimal
         var unpaidOwnerPayouts: Decimal
         var unpaidTaxes: Decimal
+        var maintenanceReserves: Decimal
 
         // Counts
         var futureReservationCount: Int
@@ -78,9 +79,9 @@ class TrustCalculationService {
         var unpaidPayoutReservations: [ReservationSummary]
         var unpaidTaxReservations: [ReservationSummary]
 
-        /// Expected trust balance: Future Deposits - Stripe Holdback + Unpaid Payouts + Unpaid Taxes
+        /// Expected trust balance: Future Deposits - Stripe Holdback + Unpaid Payouts + Unpaid Taxes + Maintenance Reserves
         var expectedBalance: Decimal {
-            futureDeposits - stripeHoldback + unpaidOwnerPayouts + unpaidTaxes
+            futureDeposits - stripeHoldback + unpaidOwnerPayouts + unpaidTaxes + maintenanceReserves
         }
 
         /// Actual funds available: Bank Balance + Stripe Holdback
@@ -107,6 +108,7 @@ class TrustCalculationService {
             - Stripe Holdback: \(stripeHoldback.asCurrency)
             + Unpaid Owner Payouts: \(unpaidOwnerPayouts.asCurrency)
             + Unpaid Taxes: \(unpaidTaxes.asCurrency)
+            + Maintenance Reserves: \(maintenanceReserves.asCurrency)
             ─────────────────────────
             Expected Balance: \(expectedBalance.asCurrency)
 
@@ -170,6 +172,9 @@ class TrustCalculationService {
         let unpaidTaxRes = fetchUnremittedTaxReservations()
         let unpaidTaxes = unpaidTaxRes.reduce(Decimal(0)) { $0 + $1.taxAmount }
 
+        // 4. Get maintenance reserves from settings
+        let maintenanceReserves = fetchMaintenanceReserves()
+
         return TrustCalculation(
             calculationDate: Date(),
             bankBalance: bankBalance,
@@ -177,6 +182,7 @@ class TrustCalculationService {
             futureDeposits: futureDeposits,
             unpaidOwnerPayouts: unpaidPayouts,
             unpaidTaxes: unpaidTaxes,
+            maintenanceReserves: maintenanceReserves,
             futureReservationCount: futureRes.count,
             unpaidPayoutReservationCount: unpaidPayoutRes.count,
             unpaidTaxReservationCount: unpaidTaxRes.count,
@@ -184,6 +190,14 @@ class TrustCalculationService {
             unpaidPayoutReservations: unpaidPayoutRes,
             unpaidTaxReservations: unpaidTaxRes
         )
+    }
+
+    /// Fetches maintenance reserves from AppSettings
+    private func fetchMaintenanceReserves() -> Decimal {
+        let request: NSFetchRequest<AppSettings> = AppSettings.fetchRequest()
+        request.fetchLimit = 1
+        guard let settings = try? context.fetch(request).first else { return 0 }
+        return settings.maintenanceReserves as Decimal? ?? 0
     }
 
     // MARK: - Fetch Methods
@@ -377,6 +391,7 @@ class TrustCalculationService {
         snapshot.futureDeposits = calculation.futureDeposits as NSDecimalNumber
         snapshot.unpaidOwnerPayouts = calculation.unpaidOwnerPayouts as NSDecimalNumber
         snapshot.unpaidTaxes = calculation.unpaidTaxes as NSDecimalNumber
+        snapshot.maintenanceReserves = calculation.maintenanceReserves as NSDecimalNumber
         snapshot.expectedBalance = calculation.expectedBalance as NSDecimalNumber
         snapshot.actualBalance = calculation.actualBalance as NSDecimalNumber
         snapshot.variance = calculation.variance as NSDecimalNumber

@@ -139,6 +139,7 @@ struct GeneralSettingsSection: View {
 
     @State private var companyName = ""
     @State private var defaultManagementFee: Double = 20.0
+    @State private var maintenanceReserves: Decimal = 0
     @State private var isSaving = false
     @State private var alert: AlertItem?
 
@@ -163,6 +164,20 @@ struct GeneralSettingsSection: View {
                 }
             }
 
+            SettingsGroup(title: "Maintenance Reserves") {
+                HStack {
+                    Text("Total Reserves Held")
+                        .frame(width: 180, alignment: .leading)
+                    TextField("", value: $maintenanceReserves, format: .currency(code: "USD"))
+                        .textFieldStyle(.roundedBorder)
+                        .frame(width: 150)
+                }
+
+                Text("Total maintenance reserves held for all owners. This amount is included in your trust account reconciliation as funds that should be in the account.")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+
             HStack {
                 Spacer()
                 Button(action: save) {
@@ -185,6 +200,7 @@ struct GeneralSettingsSection: View {
         let settings = AppSettings.getOrCreate(in: viewContext)
         companyName = settings.companyName ?? ""
         defaultManagementFee = (settings.defaultManagementFeePercent as Decimal? ?? 20).doubleValue
+        maintenanceReserves = settings.maintenanceReserves as Decimal? ?? 0
     }
 
     private func save() {
@@ -192,6 +208,7 @@ struct GeneralSettingsSection: View {
         let settings = AppSettings.getOrCreate(in: viewContext)
         settings.companyName = companyName.isEmpty ? nil : companyName
         settings.defaultManagementFeePercent = Decimal(defaultManagementFee) as NSDecimalNumber
+        settings.maintenanceReserves = maintenanceReserves as NSDecimalNumber
         settings.updatedAt = Date()
 
         do {

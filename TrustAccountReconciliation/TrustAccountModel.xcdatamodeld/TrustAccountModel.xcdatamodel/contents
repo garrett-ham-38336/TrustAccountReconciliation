@@ -114,6 +114,7 @@
         <attribute name="futureDeposits" attributeType="Decimal" defaultValueString="0.0"/>
         <attribute name="unpaidOwnerPayouts" attributeType="Decimal" defaultValueString="0.0"/>
         <attribute name="unpaidTaxes" attributeType="Decimal" defaultValueString="0.0"/>
+        <attribute name="maintenanceReserves" attributeType="Decimal" defaultValueString="0.0"/>
         <attribute name="expectedBalance" attributeType="Decimal" defaultValueString="0.0"/>
         <attribute name="actualBalance" attributeType="Decimal" defaultValueString="0.0"/>
         <attribute name="variance" attributeType="Decimal" defaultValueString="0.0"/>
@@ -156,6 +157,7 @@
         <attribute name="varianceThreshold" attributeType="Decimal" defaultValueString="100"/>
         <attribute name="reconciliationReminderDays" attributeType="Integer 16" defaultValueString="7" usesScalarValueType="YES"/>
         <attribute name="defaultManagementFeePercent" attributeType="Decimal" defaultValueString="20"/>
+        <attribute name="maintenanceReserves" attributeType="Decimal" defaultValueString="0"/>
         <attribute name="guestyIntegrationEnabled" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
         <attribute name="lastGuestySyncDate" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
         <attribute name="createdAt" attributeType="Date" usesScalarValueType="NO"/>

@@ -498,6 +498,12 @@ struct ReconciliationWizardView: View {
                     isPositive: true
                 )
 
+                CalculationRow(
+                    label: "Plus: Maintenance Reserves",
+                    value: calc.maintenanceReserves,
+                    isPositive: true
+                )
+
                 Divider()
 
                 HStack {
