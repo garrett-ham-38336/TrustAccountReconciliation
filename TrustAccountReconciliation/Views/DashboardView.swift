@@ -187,6 +187,14 @@ struct DashboardView: View {
                 icon: "doc.text",
                 color: .purple
             )
+
+            SummaryCard(
+                title: "Maintenance Reserves",
+                value: viewModel.maintenanceReserves.asCurrency,
+                subtitle: "Held for owners",
+                icon: "wrench.and.screwdriver",
+                color: .teal
+            )
         }
     }
 
@@ -360,6 +368,9 @@ class DashboardViewModel: ObservableObject {
     @Published var showingStripeSync = false
     @Published var isSyncingStripe = false
 
+    // Maintenance reserves
+    @Published var maintenanceReserves: Decimal = 0
+
     var stripeHoldback: Decimal {
         stripePending + stripeReserve
     }
@@ -397,6 +408,17 @@ class DashboardViewModel: ObservableObject {
 
         // Load Stripe data from most recent snapshot
         loadStripeData(context: context)
+
+        // Load maintenance reserves from settings
+        loadMaintenanceReserves(context: context)
+    }
+
+    func loadMaintenanceReserves(context: NSManagedObjectContext) {
+        let request = NSFetchRequest<AppSettings>(entityName: "AppSettings")
+        request.fetchLimit = 1
+        if let settings = try? context.fetch(request).first {
+            maintenanceReserves = settings.maintenanceReserves as Decimal? ?? 0
+        }
     }
 
     func loadStripeData(context: NSManagedObjectContext) {
