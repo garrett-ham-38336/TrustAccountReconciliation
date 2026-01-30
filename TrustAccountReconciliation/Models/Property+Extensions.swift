@@ -4,7 +4,16 @@ import CoreData
 // MARK: - Property Extensions
 
 extension Property {
+    /// Returns nickname if set, otherwise falls back to name
     var displayName: String {
+        if let nick = nickname, !nick.isEmpty {
+            return nick
+        }
+        return name ?? "Unknown Property"
+    }
+
+    /// Returns the OTA listing name (always uses name field)
+    var listingName: String {
         name ?? "Unknown Property"
     }
 

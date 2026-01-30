@@ -124,22 +124,23 @@ extension Reservation {
         return request
     }
 
-    /// Completed reservations with unpaid owner payouts
+    /// Reservations with unpaid owner payouts (includes current stays and completed stays)
+    /// Once check-in occurs, the funds are owed to the owner
     static func completedUnpaidPayouts(since date: Date?) -> NSFetchRequest<Reservation> {
         let request: NSFetchRequest<Reservation> = Reservation.fetchRequest()
         if let sinceDate = date {
             request.predicate = NSPredicate(
-                format: "checkOutDate <= %@ AND checkOutDate > %@ AND isCancelled == NO AND ownerPaidOut == NO",
+                format: "checkInDate <= %@ AND checkInDate > %@ AND isCancelled == NO AND ownerPaidOut == NO",
                 Date() as NSDate,
                 sinceDate as NSDate
             )
         } else {
             request.predicate = NSPredicate(
-                format: "checkOutDate <= %@ AND isCancelled == NO AND ownerPaidOut == NO",
+                format: "checkInDate <= %@ AND isCancelled == NO AND ownerPaidOut == NO",
                 Date() as NSDate
             )
         }
-        request.sortDescriptors = [NSSortDescriptor(keyPath: \Reservation.checkOutDate, ascending: true)]
+        request.sortDescriptors = [NSSortDescriptor(keyPath: \Reservation.checkInDate, ascending: true)]
         return request
     }
 

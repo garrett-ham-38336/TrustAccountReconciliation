@@ -22,6 +22,7 @@
         <attribute name="id" attributeType="UUID" usesScalarValueType="NO"/>
         <attribute name="guestyListingId" optional="YES" attributeType="String"/>
         <attribute name="name" attributeType="String"/>
+        <attribute name="nickname" optional="YES" attributeType="String"/>
         <attribute name="address" optional="YES" attributeType="String"/>
         <attribute name="city" optional="YES" attributeType="String"/>
         <attribute name="state" optional="YES" attributeType="String" defaultValueString="AR"/>

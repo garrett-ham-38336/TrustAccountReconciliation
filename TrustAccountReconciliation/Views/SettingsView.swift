@@ -58,6 +58,8 @@ struct SettingsView: View {
                     GeneralSettingsSection()
                 case .reconciliation:
                     ReconciliationSettingsSection()
+                case .taxRemittance:
+                    TaxRemittanceSection()
                 case .guesty:
                     GuestySettingsSection()
                 case .stripe:
@@ -81,6 +83,7 @@ struct SettingsView: View {
 enum SettingsSection: String, CaseIterable {
     case general
     case reconciliation
+    case taxRemittance
     case guesty
     case stripe
     case taxJurisdictions
@@ -91,6 +94,7 @@ enum SettingsSection: String, CaseIterable {
         switch self {
         case .general: return "General"
         case .reconciliation: return "Reconciliation"
+        case .taxRemittance: return "Tax Remittance"
         case .guesty: return "Guesty API"
         case .stripe: return "Stripe API"
         case .taxJurisdictions: return "Tax Jurisdictions"
@@ -103,6 +107,7 @@ enum SettingsSection: String, CaseIterable {
         switch self {
         case .general: return "gear"
         case .reconciliation: return "checkmark.circle.fill"
+        case .taxRemittance: return "dollarsign.circle.fill"
         case .guesty: return "cloud.fill"
         case .stripe: return "creditcard.fill"
         case .taxJurisdictions: return "percent"
@@ -112,7 +117,7 @@ enum SettingsSection: String, CaseIterable {
     }
 
     static var configurationSections: [SettingsSection] {
-        [.general, .reconciliation]
+        [.general, .reconciliation, .taxRemittance]
     }
 
     static var integrationSections: [SettingsSection] {
@@ -296,6 +301,212 @@ struct ReconciliationSettingsSection: View {
         } catch {
             alert = .error(error)
         }
+    }
+}
+
+// MARK: - Tax Remittance
+
+struct TaxRemittanceSection: View {
+    @Environment(\.managedObjectContext) private var viewContext
+    @State private var selectedMonth: Date = Calendar.current.date(byAdding: .month, value: -1, to: Date()) ?? Date()
+    @State private var unpaidMonths: [MonthYear] = []
+    @State private var alert: AlertItem?
+    @State private var isProcessing = false
+
+    struct MonthYear: Identifiable, Hashable {
+        let id = UUID()
+        let month: Int
+        let year: Int
+        let unpaidAmount: Decimal
+        let reservationCount: Int
+
+        var displayName: String {
+            let components = DateComponents(year: year, month: month, day: 1)
+            guard let date = Calendar.current.date(from: components) else { return "Unknown" }
+            let formatter = DateFormatter()
+            formatter.dateFormat = "MMMM yyyy"
+            return formatter.string(from: date)
+        }
+
+        var date: Date {
+            let components = DateComponents(year: year, month: month, day: 1)
+            return Calendar.current.date(from: components) ?? Date()
+        }
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 24) {
+            Text("Tax Remittance")
+                .font(.title2)
+                .fontWeight(.bold)
+
+            Text("Mark monthly taxes as paid to clear them from the unpaid taxes calculation.")
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+
+            SettingsGroup(title: "Months with Unpaid Taxes") {
+                if unpaidMonths.isEmpty {
+                    HStack {
+                        Image(systemName: "checkmark.circle.fill")
+                            .foregroundColor(.green)
+                        Text("All taxes have been marked as paid!")
+                            .foregroundColor(.secondary)
+                    }
+                    .padding()
+                } else {
+                    VStack(spacing: 12) {
+                        ForEach(unpaidMonths) { monthYear in
+                            HStack {
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text(monthYear.displayName)
+                                        .font(.subheadline)
+                                        .fontWeight(.medium)
+
+                                    Text("\(monthYear.reservationCount) reservations")
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
+                                }
+
+                                Spacer()
+
+                                Text(monthYear.unpaidAmount.asCurrency)
+                                    .font(.subheadline)
+                                    .fontWeight(.semibold)
+                                    .foregroundColor(.orange)
+
+                                Button(action: { markAsPaid(monthYear) }) {
+                                    if isProcessing {
+                                        ProgressView()
+                                            .scaleEffect(0.7)
+                                    } else {
+                                        Text("Mark Paid")
+                                    }
+                                }
+                                .buttonStyle(.borderedProminent)
+                                .tint(.green)
+                                .disabled(isProcessing)
+                            }
+                            .padding()
+                            .background(Color(NSColor.windowBackgroundColor))
+                            .cornerRadius(8)
+                        }
+                    }
+                }
+            }
+
+            // Info section
+            HStack(alignment: .top, spacing: 12) {
+                Image(systemName: "info.circle.fill")
+                    .foregroundColor(.blue)
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("When you mark a month as paid:")
+                        .font(.subheadline)
+                        .fontWeight(.medium)
+
+                    Text("• All reservations with checkout in that month will be marked as tax remitted")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                    Text("• The taxes will no longer appear in the unpaid taxes total")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                    Text("• This action cannot be undone (but you can manually edit reservations if needed)")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+            }
+            .padding()
+            .background(Color.blue.opacity(0.1))
+            .cornerRadius(8)
+        }
+        .onAppear(perform: loadUnpaidMonths)
+        .alert(item: $alert) { $0.buildAlert() }
+    }
+
+    private func loadUnpaidMonths() {
+        // Fetch all reservations with unpaid taxes
+        let request: NSFetchRequest<Reservation> = Reservation.fetchRequest()
+        request.predicate = NSPredicate(
+            format: "checkOutDate <= %@ AND isCancelled == NO AND taxRemitted == NO AND taxAmount > 0",
+            Date() as NSDate
+        )
+        request.sortDescriptors = [NSSortDescriptor(keyPath: \Reservation.checkOutDate, ascending: true)]
+
+        guard let reservations = try? viewContext.fetch(request) else {
+            unpaidMonths = []
+            return
+        }
+
+        // Group by month/year
+        var monthGroups: [String: (month: Int, year: Int, amount: Decimal, count: Int)] = [:]
+
+        for reservation in reservations {
+            guard let checkOut = reservation.checkOutDate else { continue }
+            let components = Calendar.current.dateComponents([.month, .year], from: checkOut)
+            guard let month = components.month, let year = components.year else { continue }
+
+            let key = "\(year)-\(month)"
+            let taxAmount = reservation.taxAmount as Decimal? ?? 0
+
+            if var existing = monthGroups[key] {
+                existing.amount += taxAmount
+                existing.count += 1
+                monthGroups[key] = existing
+            } else {
+                monthGroups[key] = (month: month, year: year, amount: taxAmount, count: 1)
+            }
+        }
+
+        // Convert to array and sort by date
+        unpaidMonths = monthGroups.values
+            .map { MonthYear(month: $0.month, year: $0.year, unpaidAmount: $0.amount, reservationCount: $0.count) }
+            .sorted { $0.date < $1.date }
+    }
+
+    private func markAsPaid(_ monthYear: MonthYear) {
+        isProcessing = true
+
+        // Get start and end of the month
+        var components = DateComponents()
+        components.year = monthYear.year
+        components.month = monthYear.month
+        components.day = 1
+
+        guard let startOfMonth = Calendar.current.date(from: components),
+              let endOfMonth = Calendar.current.date(byAdding: DateComponents(month: 1, day: -1), to: startOfMonth) else {
+            isProcessing = false
+            return
+        }
+
+        // Add one day to end of month to include the last day
+        let endOfMonthPlusOne = Calendar.current.date(byAdding: .day, value: 1, to: endOfMonth) ?? endOfMonth
+
+        // Fetch and update all reservations for this month
+        let request: NSFetchRequest<Reservation> = Reservation.fetchRequest()
+        request.predicate = NSPredicate(
+            format: "checkOutDate >= %@ AND checkOutDate < %@ AND isCancelled == NO AND taxRemitted == NO AND taxAmount > 0",
+            startOfMonth as NSDate,
+            endOfMonthPlusOne as NSDate
+        )
+
+        do {
+            let reservations = try viewContext.fetch(request)
+            for reservation in reservations {
+                reservation.taxRemitted = true
+                reservation.taxRemittedDate = Date()
+            }
+
+            try viewContext.save()
+
+            // Reload the list
+            loadUnpaidMonths()
+
+            alert = .success(message: "Marked \(reservations.count) reservations as tax remitted for \(monthYear.displayName)")
+        } catch {
+            alert = .error(error)
+        }
+
+        isProcessing = false
     }
 }
 

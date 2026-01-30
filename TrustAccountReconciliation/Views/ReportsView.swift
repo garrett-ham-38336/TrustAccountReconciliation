@@ -9,23 +9,106 @@ struct ReportsView: View {
     @State private var endDate = Date().endOfMonth
     @State private var selectedOwner: Owner?
     @State private var isGenerating = false
+    @State private var isMaximized = false
     @State private var alert: AlertItem?
 
     var body: some View {
-        HSplitView {
-            // Report Selection
-            reportSelectionView
-                .frame(minWidth: 250, maxWidth: 350)
-
-            // Report Preview/Configuration
-            if let report = selectedReport {
-                reportConfigurationView(for: report)
+        Group {
+            if isMaximized, let report = selectedReport {
+                // Maximized view - full screen report
+                maximizedReportView(for: report)
             } else {
-                emptyStateView
+                // Normal split view
+                HSplitView {
+                    // Report Selection
+                    reportSelectionView
+                        .frame(minWidth: 250, maxWidth: 350)
+
+                    // Report Preview/Configuration
+                    if let report = selectedReport {
+                        reportConfigurationView(for: report)
+                    } else {
+                        emptyStateView
+                    }
+                }
             }
         }
-        .navigationTitle("Reports")
+        .navigationTitle(isMaximized ? (selectedReport?.displayName ?? "Reports") : "Reports")
         .alert(item: $alert) { $0.buildAlert() }
+    }
+
+    // MARK: - Maximized Report View
+
+    private func maximizedReportView(for report: ReportType) -> some View {
+        VStack(spacing: 0) {
+            // Header with minimize button
+            HStack {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(report.displayName)
+                        .font(.title2)
+                        .fontWeight(.bold)
+
+                    if report.requiresDateRange {
+                        Text("\(startDate.asShortDate) - \(endDate.asShortDate)")
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                    }
+                }
+
+                Spacer()
+
+                // Date range quick select (for reports that need it)
+                if report.requiresDateRange {
+                    Menu("Change Period") {
+                        Button("This Month") {
+                            startDate = Date().startOfMonth
+                            endDate = Date().endOfMonth
+                        }
+                        Button("Last Month") {
+                            let lastMonth = Calendar.current.date(byAdding: .month, value: -1, to: Date())!
+                            startDate = lastMonth.startOfMonth
+                            endDate = lastMonth.endOfMonth
+                        }
+                        Button("This Quarter") {
+                            let (start, end) = currentQuarterDates()
+                            startDate = start
+                            endDate = end
+                        }
+                        Button("This Year") {
+                            startDate = Calendar.current.date(from: Calendar.current.dateComponents([.year], from: Date()))!
+                            endDate = Date()
+                        }
+                    }
+                }
+
+                Button(action: { isMaximized = false }) {
+                    Label("Minimize", systemImage: "arrow.down.right.and.arrow.up.left")
+                }
+                .buttonStyle(.bordered)
+            }
+            .padding()
+            .background(Color(NSColor.controlBackgroundColor))
+
+            Divider()
+
+            // Full report content
+            ScrollView {
+                VStack(alignment: .leading, spacing: 16) {
+                    switch report {
+                    case .revenueBySource:
+                        RevenueBySourceFullView(startDate: startDate, endDate: endDate)
+                    default:
+                        ReportPreviewContent(
+                            report: report,
+                            startDate: startDate,
+                            endDate: endDate,
+                            owner: selectedOwner
+                        )
+                    }
+                }
+                .padding()
+            }
+        }
     }
 
     // MARK: - Report Selection View
@@ -41,6 +124,13 @@ struct ReportsView: View {
 
             Section("Owner Reports") {
                 ForEach(ReportType.ownerReports, id: \.self) { report in
+                    ReportListRow(report: report)
+                        .tag(report)
+                }
+            }
+
+            Section("Revenue Reports") {
+                ForEach(ReportType.revenueReports, id: \.self) { report in
                     ReportListRow(report: report)
                         .tag(report)
                 }
@@ -179,6 +269,11 @@ struct ReportsView: View {
 
     private var reportActions: some View {
         HStack {
+            Button(action: { isMaximized = true }) {
+                Label("Maximize", systemImage: "arrow.up.left.and.arrow.down.right")
+            }
+            .buttonStyle(.bordered)
+
             Spacer()
 
             Button(action: { exportReport(format: .csv) }) {
@@ -260,6 +355,9 @@ enum ReportType: String, CaseIterable, Identifiable {
     case ownerStatement
     case propertyPerformance
 
+    // Revenue Reports
+    case revenueBySource
+
     // Tax Reports
     case taxLiabilitySummary
     case taxRemittanceHistory
@@ -274,6 +372,7 @@ enum ReportType: String, CaseIterable, Identifiable {
         case .ownerPayoutSummary: return "Owner Payout Summary"
         case .ownerStatement: return "Owner Statement"
         case .propertyPerformance: return "Property Performance"
+        case .revenueBySource: return "Revenue by Source"
         case .taxLiabilitySummary: return "Tax Liability Summary"
         case .taxRemittanceHistory: return "Tax Remittance History"
         }
@@ -293,6 +392,8 @@ enum ReportType: String, CaseIterable, Identifiable {
             return "Detailed statement for a specific owner showing all activity."
         case .propertyPerformance:
             return "Reservation and revenue statistics by property."
+        case .revenueBySource:
+            return "Monthly property revenue breakdown by booking source (Airbnb, VRBO, Other)."
         case .taxLiabilitySummary:
             return "Current tax liabilities by jurisdiction."
         case .taxRemittanceHistory:
@@ -308,6 +409,7 @@ enum ReportType: String, CaseIterable, Identifiable {
         case .ownerPayoutSummary: return "person.2.fill"
         case .ownerStatement: return "envelope.fill"
         case .propertyPerformance: return "chart.bar.fill"
+        case .revenueBySource: return "dollarsign.arrow.circlepath"
         case .taxLiabilitySummary: return "percent"
         case .taxRemittanceHistory: return "building.fill"
         }
@@ -319,6 +421,8 @@ enum ReportType: String, CaseIterable, Identifiable {
             return .blue
         case .ownerPayoutSummary, .ownerStatement, .propertyPerformance:
             return .green
+        case .revenueBySource:
+            return .purple
         case .taxLiabilitySummary, .taxRemittanceHistory:
             return .orange
         }
@@ -328,6 +432,8 @@ enum ReportType: String, CaseIterable, Identifiable {
         switch self {
         case .trustBalanceSummary, .futureDeposits, .ownerPayoutSummary, .taxLiabilitySummary:
             return false
+        case .revenueBySource:
+            return true  // Uses month selector
         default:
             return true
         }
@@ -348,6 +454,10 @@ enum ReportType: String, CaseIterable, Identifiable {
 
     static var ownerReports: [ReportType] {
         [.ownerPayoutSummary, .ownerStatement, .propertyPerformance]
+    }
+
+    static var revenueReports: [ReportType] {
+        [.revenueBySource]
     }
 
     static var taxReports: [ReportType] {
@@ -444,6 +554,8 @@ struct ReportPreviewContent: View {
                     FutureDepositsPreview()
                 case .ownerPayoutSummary:
                     OwnerPayoutPreview()
+                case .revenueBySource:
+                    RevenueBySourcePreview(startDate: startDate, endDate: endDate)
                 case .taxLiabilitySummary:
                     TaxLiabilityPreview()
                 default:
@@ -758,6 +870,420 @@ struct TaxLiabilityPreview: View {
         .padding(.vertical)
         .background(Color(NSColor.controlBackgroundColor))
         .cornerRadius(8)
+    }
+}
+
+// MARK: - Revenue by Source Full View (Maximized)
+
+struct RevenueBySourceFullView: View {
+    let startDate: Date
+    let endDate: Date
+
+    @Environment(\.managedObjectContext) private var viewContext
+    @State private var propertyRevenues: [PropertyRevenueData] = []
+
+    struct PropertyRevenueData: Identifiable {
+        let id: UUID
+        let propertyName: String
+        let airbnbTotal: Decimal
+        let airbnbCount: Int
+        let vrboTotal: Decimal
+        let vrboCount: Int
+        let otherTotal: Decimal
+        let otherCount: Int
+
+        var grandTotal: Decimal {
+            airbnbTotal + vrboTotal + otherTotal
+        }
+
+        var totalCount: Int {
+            airbnbCount + vrboCount + otherCount
+        }
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            // Summary stats
+            HStack(spacing: 24) {
+                StatBox(title: "Properties", value: "\(propertyRevenues.count)", color: .blue)
+                StatBox(title: "Airbnb Total", value: totals.airbnb.asCurrency, color: .red)
+                StatBox(title: "VRBO Total", value: totals.vrbo.asCurrency, color: .blue)
+                StatBox(title: "Other Total", value: totals.other.asCurrency, color: .gray)
+                StatBox(title: "Grand Total", value: totals.grand.asCurrency, color: .purple)
+            }
+
+            // Table
+            VStack(spacing: 0) {
+                // Header
+                HStack {
+                    Text("Property")
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    Text("Airbnb")
+                        .frame(width: 120, alignment: .trailing)
+                    Text("# Stays")
+                        .frame(width: 60, alignment: .trailing)
+                    Text("VRBO")
+                        .frame(width: 120, alignment: .trailing)
+                    Text("# Stays")
+                        .frame(width: 60, alignment: .trailing)
+                    Text("Other")
+                        .frame(width: 120, alignment: .trailing)
+                    Text("# Stays")
+                        .frame(width: 60, alignment: .trailing)
+                    Text("Total")
+                        .frame(width: 120, alignment: .trailing)
+                }
+                .font(.subheadline)
+                .fontWeight(.semibold)
+                .padding(.horizontal)
+                .padding(.vertical, 12)
+                .background(Color(NSColor.controlBackgroundColor))
+
+                Divider()
+
+                if propertyRevenues.isEmpty {
+                    Text("No reservations found for the selected period")
+                        .foregroundColor(.secondary)
+                        .frame(maxWidth: .infinity, alignment: .center)
+                        .padding(40)
+                } else {
+                    ForEach(propertyRevenues) { property in
+                        HStack {
+                            Text(property.propertyName)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .fontWeight(.medium)
+                            Text(property.airbnbTotal.asCurrency)
+                                .frame(width: 120, alignment: .trailing)
+                                .foregroundColor(property.airbnbTotal > 0 ? .red : .secondary)
+                            Text("\(property.airbnbCount)")
+                                .frame(width: 60, alignment: .trailing)
+                                .foregroundColor(.secondary)
+                            Text(property.vrboTotal.asCurrency)
+                                .frame(width: 120, alignment: .trailing)
+                                .foregroundColor(property.vrboTotal > 0 ? .blue : .secondary)
+                            Text("\(property.vrboCount)")
+                                .frame(width: 60, alignment: .trailing)
+                                .foregroundColor(.secondary)
+                            Text(property.otherTotal.asCurrency)
+                                .frame(width: 120, alignment: .trailing)
+                                .foregroundColor(property.otherTotal > 0 ? .primary : .secondary)
+                            Text("\(property.otherCount)")
+                                .frame(width: 60, alignment: .trailing)
+                                .foregroundColor(.secondary)
+                            Text(property.grandTotal.asCurrency)
+                                .frame(width: 120, alignment: .trailing)
+                                .fontWeight(.semibold)
+                        }
+                        .font(.subheadline)
+                        .padding(.horizontal)
+                        .padding(.vertical, 10)
+
+                        Divider()
+                    }
+
+                    // Totals row
+                    HStack {
+                        Text("TOTAL")
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .fontWeight(.bold)
+                        Text(totals.airbnb.asCurrency)
+                            .frame(width: 120, alignment: .trailing)
+                            .foregroundColor(.red)
+                        Text("\(totalCounts.airbnb)")
+                            .frame(width: 60, alignment: .trailing)
+                        Text(totals.vrbo.asCurrency)
+                            .frame(width: 120, alignment: .trailing)
+                            .foregroundColor(.blue)
+                        Text("\(totalCounts.vrbo)")
+                            .frame(width: 60, alignment: .trailing)
+                        Text(totals.other.asCurrency)
+                            .frame(width: 120, alignment: .trailing)
+                        Text("\(totalCounts.other)")
+                            .frame(width: 60, alignment: .trailing)
+                        Text(totals.grand.asCurrency)
+                            .frame(width: 120, alignment: .trailing)
+                            .foregroundColor(.purple)
+                    }
+                    .font(.subheadline)
+                    .fontWeight(.bold)
+                    .padding(.horizontal)
+                    .padding(.vertical, 12)
+                    .background(Color(NSColor.controlBackgroundColor))
+                }
+            }
+            .background(Color(NSColor.windowBackgroundColor))
+            .cornerRadius(8)
+            .overlay(
+                RoundedRectangle(cornerRadius: 8)
+                    .stroke(Color(NSColor.separatorColor), lineWidth: 1)
+            )
+        }
+        .onAppear(perform: loadData)
+        .onChange(of: startDate) { loadData() }
+        .onChange(of: endDate) { loadData() }
+    }
+
+    private var totals: (airbnb: Decimal, vrbo: Decimal, other: Decimal, grand: Decimal) {
+        let airbnb = propertyRevenues.reduce(Decimal(0)) { $0 + $1.airbnbTotal }
+        let vrbo = propertyRevenues.reduce(Decimal(0)) { $0 + $1.vrboTotal }
+        let other = propertyRevenues.reduce(Decimal(0)) { $0 + $1.otherTotal }
+        return (airbnb, vrbo, other, airbnb + vrbo + other)
+    }
+
+    private var totalCounts: (airbnb: Int, vrbo: Int, other: Int) {
+        let airbnb = propertyRevenues.reduce(0) { $0 + $1.airbnbCount }
+        let vrbo = propertyRevenues.reduce(0) { $0 + $1.vrboCount }
+        let other = propertyRevenues.reduce(0) { $0 + $1.otherCount }
+        return (airbnb, vrbo, other)
+    }
+
+    private func loadData() {
+        let request: NSFetchRequest<Reservation> = Reservation.fetchRequest()
+        request.predicate = NSPredicate(
+            format: "checkOutDate >= %@ AND checkOutDate <= %@ AND isCancelled == NO",
+            startDate as NSDate,
+            endDate as NSDate
+        )
+
+        guard let reservations = try? viewContext.fetch(request) else {
+            propertyRevenues = []
+            return
+        }
+
+        var propertyData: [UUID: (name: String, airbnb: Decimal, airbnbCount: Int, vrbo: Decimal, vrboCount: Int, other: Decimal, otherCount: Int)] = [:]
+
+        for reservation in reservations {
+            guard let property = reservation.property,
+                  let propertyId = property.id else { continue }
+
+            let propertyName = property.displayName
+            let amount = reservation.totalAmount as Decimal? ?? 0
+            let source = (reservation.source ?? "").lowercased()
+
+            var data = propertyData[propertyId] ?? (name: propertyName, airbnb: 0, airbnbCount: 0, vrbo: 0, vrboCount: 0, other: 0, otherCount: 0)
+
+            if source.contains("airbnb") {
+                data.airbnb += amount
+                data.airbnbCount += 1
+            } else if source.contains("vrbo") || source.contains("homeaway") {
+                data.vrbo += amount
+                data.vrboCount += 1
+            } else {
+                data.other += amount
+                data.otherCount += 1
+            }
+
+            propertyData[propertyId] = data
+        }
+
+        propertyRevenues = propertyData
+            .filter { $0.value.airbnb + $0.value.vrbo + $0.value.other > 0 }
+            .map { PropertyRevenueData(
+                id: $0.key,
+                propertyName: $0.value.name,
+                airbnbTotal: $0.value.airbnb,
+                airbnbCount: $0.value.airbnbCount,
+                vrboTotal: $0.value.vrbo,
+                vrboCount: $0.value.vrboCount,
+                otherTotal: $0.value.other,
+                otherCount: $0.value.otherCount
+            )}
+            .sorted { $0.grandTotal > $1.grandTotal }
+    }
+}
+
+struct StatBox: View {
+    let title: String
+    let value: String
+    let color: Color
+
+    var body: some View {
+        VStack(spacing: 4) {
+            Text(title)
+                .font(.caption)
+                .foregroundColor(.secondary)
+            Text(value)
+                .font(.title3)
+                .fontWeight(.bold)
+                .foregroundColor(color)
+        }
+        .frame(minWidth: 100)
+        .padding()
+        .background(Color(NSColor.controlBackgroundColor))
+        .cornerRadius(8)
+    }
+}
+
+// MARK: - Revenue by Source Preview
+
+struct RevenueBySourcePreview: View {
+    let startDate: Date
+    let endDate: Date
+
+    @Environment(\.managedObjectContext) private var viewContext
+    @State private var propertyRevenues: [PropertyRevenueBySource] = []
+
+    struct PropertyRevenueBySource: Identifiable {
+        let id: UUID
+        let propertyName: String
+        let airbnbTotal: Decimal
+        let vrboTotal: Decimal
+        let otherTotal: Decimal
+
+        var grandTotal: Decimal {
+            airbnbTotal + vrboTotal + otherTotal
+        }
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            // Header row
+            HStack {
+                Text("Property")
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                Text("Airbnb")
+                    .frame(width: 100, alignment: .trailing)
+                Text("VRBO")
+                    .frame(width: 100, alignment: .trailing)
+                Text("Other")
+                    .frame(width: 100, alignment: .trailing)
+                Text("Total")
+                    .frame(width: 100, alignment: .trailing)
+            }
+            .font(.caption)
+            .fontWeight(.medium)
+            .padding(.horizontal)
+
+            Divider()
+
+            if propertyRevenues.isEmpty {
+                Text("No reservations found for the selected period")
+                    .foregroundColor(.secondary)
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .padding()
+            } else {
+                ScrollView {
+                    VStack(spacing: 0) {
+                        ForEach(propertyRevenues) { property in
+                            HStack {
+                                Text(property.propertyName)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .lineLimit(1)
+                                Text(property.airbnbTotal.asCurrency)
+                                    .frame(width: 100, alignment: .trailing)
+                                    .foregroundColor(property.airbnbTotal > 0 ? .primary : .secondary)
+                                Text(property.vrboTotal.asCurrency)
+                                    .frame(width: 100, alignment: .trailing)
+                                    .foregroundColor(property.vrboTotal > 0 ? .primary : .secondary)
+                                Text(property.otherTotal.asCurrency)
+                                    .frame(width: 100, alignment: .trailing)
+                                    .foregroundColor(property.otherTotal > 0 ? .primary : .secondary)
+                                Text(property.grandTotal.asCurrency)
+                                    .frame(width: 100, alignment: .trailing)
+                                    .fontWeight(.medium)
+                            }
+                            .font(.caption)
+                            .padding(.horizontal)
+                            .padding(.vertical, 6)
+
+                            Divider()
+                        }
+                    }
+                }
+                .frame(maxHeight: 300)
+
+                // Totals row
+                let totals = calculateTotals()
+                HStack {
+                    Text("TOTAL")
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .fontWeight(.bold)
+                    Text(totals.airbnb.asCurrency)
+                        .frame(width: 100, alignment: .trailing)
+                        .foregroundColor(.red)
+                    Text(totals.vrbo.asCurrency)
+                        .frame(width: 100, alignment: .trailing)
+                        .foregroundColor(.blue)
+                    Text(totals.other.asCurrency)
+                        .frame(width: 100, alignment: .trailing)
+                        .foregroundColor(.gray)
+                    Text(totals.grand.asCurrency)
+                        .frame(width: 100, alignment: .trailing)
+                        .foregroundColor(.purple)
+                }
+                .font(.subheadline)
+                .fontWeight(.semibold)
+                .padding(.horizontal)
+                .padding(.vertical, 8)
+                .background(Color(NSColor.windowBackgroundColor))
+            }
+        }
+        .padding(.vertical)
+        .background(Color(NSColor.controlBackgroundColor))
+        .cornerRadius(8)
+        .onAppear(perform: loadData)
+        .onChange(of: startDate) { loadData() }
+        .onChange(of: endDate) { loadData() }
+    }
+
+    private func loadData() {
+        // Fetch reservations for the selected date range
+        // Use checkout date to determine which month the revenue belongs to
+        let request: NSFetchRequest<Reservation> = Reservation.fetchRequest()
+        request.predicate = NSPredicate(
+            format: "checkOutDate >= %@ AND checkOutDate <= %@ AND isCancelled == NO",
+            startDate as NSDate,
+            endDate as NSDate
+        )
+        request.sortDescriptors = [NSSortDescriptor(keyPath: \Reservation.property?.name, ascending: true)]
+
+        guard let reservations = try? viewContext.fetch(request) else {
+            propertyRevenues = []
+            return
+        }
+
+        // Group by property and source
+        var propertyData: [UUID: (name: String, airbnb: Decimal, vrbo: Decimal, other: Decimal)] = [:]
+
+        for reservation in reservations {
+            guard let property = reservation.property,
+                  let propertyId = property.id else { continue }
+
+            let propertyName = property.displayName
+            let amount = reservation.totalAmount as Decimal? ?? 0
+            let source = (reservation.source ?? "").lowercased()
+
+            var data = propertyData[propertyId] ?? (name: propertyName, airbnb: 0, vrbo: 0, other: 0)
+
+            if source.contains("airbnb") {
+                data.airbnb += amount
+            } else if source.contains("vrbo") || source.contains("homeaway") {
+                data.vrbo += amount
+            } else {
+                data.other += amount
+            }
+
+            propertyData[propertyId] = data
+        }
+
+        // Convert to array, filtering out properties with no revenue
+        propertyRevenues = propertyData
+            .filter { $0.value.airbnb + $0.value.vrbo + $0.value.other > 0 }
+            .map { PropertyRevenueBySource(
+                id: $0.key,
+                propertyName: $0.value.name,
+                airbnbTotal: $0.value.airbnb,
+                vrboTotal: $0.value.vrbo,
+                otherTotal: $0.value.other
+            )}
+            .sorted { $0.grandTotal > $1.grandTotal }
+    }
+
+    private func calculateTotals() -> (airbnb: Decimal, vrbo: Decimal, other: Decimal, grand: Decimal) {
+        let airbnb = propertyRevenues.reduce(Decimal(0)) { $0 + $1.airbnbTotal }
+        let vrbo = propertyRevenues.reduce(Decimal(0)) { $0 + $1.vrboTotal }
+        let other = propertyRevenues.reduce(Decimal(0)) { $0 + $1.otherTotal }
+        return (airbnb, vrbo, other, airbnb + vrbo + other)
     }
 }
 

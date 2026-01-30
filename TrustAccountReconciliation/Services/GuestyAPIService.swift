@@ -273,6 +273,7 @@ class GuestyAPIService {
             let response: ListingsResponse = try await makeRequest(
                 "/listings",
                 queryItems: [
+                    URLQueryItem(name: "fields", value: "_id nickname title active address"),
                     URLQueryItem(name: "limit", value: String(limit)),
                     URLQueryItem(name: "skip", value: String(skip))
                 ]
@@ -423,9 +424,12 @@ class GuestyAPIService {
         progressHandler?("Processing \(listings.count) listings...")
 
         for listing in listings {
+            // Debug: log nickname and title for each listing
+            logDebug("Listing ID: \(listing.id) | nickname: '\(listing.nickname ?? "nil")' | title: '\(listing.title ?? "nil")' | using: '\(listing.nickname ?? listing.title ?? "Unknown")'")
+
             if let existing = Property.findByGuestyId(listing.id, in: context) {
                 // Update existing
-                existing.name = listing.title ?? listing.nickname ?? "Unknown"
+                existing.name = listing.nickname ?? listing.title ?? "Unknown"
                 existing.address = listing.address?.full
                 existing.city = listing.address?.city
                 existing.state = listing.address?.state
@@ -437,7 +441,7 @@ class GuestyAPIService {
                 let property = Property(context: context)
                 property.id = UUID()
                 property.guestyListingId = listing.id
-                property.name = listing.title ?? listing.nickname ?? "Unknown"
+                property.name = listing.nickname ?? listing.title ?? "Unknown"
                 property.address = listing.address?.full
                 property.city = listing.address?.city
                 property.state = listing.address?.state
