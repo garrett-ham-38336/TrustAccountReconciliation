@@ -515,6 +515,7 @@ struct StripeSettingsSection: View {
     @State private var connectionStatus: ConnectionStatus = .unknown
     @State private var lastSyncDate: Date?
     @State private var lastBalance: (available: Decimal, pending: Decimal, reserve: Decimal)?
+    @State private var manualRiskReserve: Decimal = 0
     @State private var alert: AlertItem?
 
     enum ConnectionStatus {
@@ -590,7 +591,7 @@ struct StripeSettingsSection: View {
 
             // Balance display (if synced)
             if let balance = lastBalance {
-                SettingsGroup(title: "Current Balance") {
+                SettingsGroup(title: "Current Balance (from API)") {
                     HStack(spacing: 24) {
                         VStack(alignment: .leading, spacing: 4) {
                             Text("Available")
@@ -610,31 +611,8 @@ struct StripeSettingsSection: View {
                                 .foregroundColor(.orange)
                         }
 
-                        if balance.reserve > 0 {
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text("Reserve")
-                                    .font(.caption)
-                                    .foregroundColor(.secondary)
-                                Text(balance.reserve.asCurrency)
-                                    .font(.headline)
-                                    .foregroundColor(.purple)
-                            }
-                        }
-
                         Spacer()
 
-                        VStack(alignment: .trailing, spacing: 4) {
-                            Text("Holdback")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                            Text((balance.pending + balance.reserve).asCurrency)
-                                .font(.headline)
-                                .fontWeight(.bold)
-                        }
-                    }
-
-                    HStack {
-                        Spacer()
                         Button(action: syncBalance) {
                             if isSyncing {
                                 ProgressView()
@@ -645,6 +623,47 @@ struct StripeSettingsSection: View {
                         }
                         .disabled(isSyncing || !isEnabled)
                     }
+                }
+
+                SettingsGroup(title: "Risk Reserve (Manual Entry)") {
+                    HStack(alignment: .top, spacing: 12) {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .foregroundColor(.orange)
+                        Text("Stripe's API does not include risk reserves. Enter your reserve amount from the Stripe Dashboard manually.")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+
+                    HStack {
+                        Text("Risk Reserve")
+                            .frame(width: 120, alignment: .leading)
+                        TextField("", value: $manualRiskReserve, format: .currency(code: "USD"))
+                            .textFieldStyle(.roundedBorder)
+                            .frame(width: 150)
+                        Button("Save") {
+                            saveManualReserve()
+                        }
+                        .buttonStyle(.bordered)
+                    }
+                    .padding(.top, 4)
+
+                    Divider()
+                        .padding(.vertical, 8)
+
+                    HStack {
+                        Text("Total Stripe Holdback")
+                            .font(.subheadline)
+                            .fontWeight(.medium)
+                        Spacer()
+                        Text((balance.pending + manualRiskReserve).asCurrency)
+                            .font(.title3)
+                            .fontWeight(.bold)
+                            .foregroundColor(.indigo)
+                    }
+
+                    Text("Pending (\(balance.pending.asCurrency)) + Risk Reserve (\(manualRiskReserve.asCurrency))")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
                 }
             }
 
@@ -748,9 +767,29 @@ struct StripeSettingsSection: View {
                 pending: snapshot.pendingBalance as Decimal? ?? 0,
                 reserve: snapshot.reserveBalance as Decimal? ?? 0
             )
+            // Load manual reserve (stored in reserve field)
+            manualRiskReserve = snapshot.reserveBalance as Decimal? ?? 0
             if isEnabled {
                 connectionStatus = .connected
             }
+        }
+    }
+
+    private func saveManualReserve() {
+        // Update the most recent snapshot with the manual reserve
+        if let snapshot = StripeSnapshot.mostRecent(in: viewContext) {
+            snapshot.reserveBalance = manualRiskReserve as NSDecimalNumber
+            snapshot.totalBalance = ((snapshot.availableBalance as Decimal? ?? 0) +
+                                     (snapshot.pendingBalance as Decimal? ?? 0) +
+                                     manualRiskReserve) as NSDecimalNumber
+            do {
+                try viewContext.save()
+                alert = .success(message: "Risk reserve saved")
+            } catch {
+                alert = .error(error)
+            }
+        } else {
+            alert = .error(NSError(domain: "", code: 0, userInfo: [NSLocalizedDescriptionKey: "Sync from Stripe first before entering reserve"]))
         }
     }
 

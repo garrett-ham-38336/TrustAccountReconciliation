@@ -81,15 +81,22 @@ class StripeAPIService {
             throw StripeError.requestFailed(httpResponse.statusCode)
         }
 
+        // Log raw response for debugging
+        let rawResponse = String(data: data, encoding: .utf8) ?? "Unable to decode"
+        logDebug("Raw Stripe response: \(rawResponse)")
+
         let decoder = JSONDecoder()
         decoder.keyDecodingStrategy = .convertFromSnakeCase
 
         do {
             let balance = try decoder.decode(StripeBalance.self, from: data)
-            logDebug("Balance fetched successfully - Available: \(balance.availableTotal), Pending: \(balance.pendingTotal)")
+            logDebug("Parsed - Available array count: \(balance.available.count), Pending array count: \(balance.pending.count)")
+            logDebug("Available amounts: \(balance.available.map { "\($0.currency): \($0.amount)" })")
+            logDebug("Instant Available amounts: \(balance.instantAvailable?.map { "\($0.currency): \($0.amount)" } ?? [])")
+            logDebug("Pending amounts: \(balance.pending.map { "\($0.currency): \($0.amount)" })")
+            logDebug("Balance fetched - Available: \(balance.availableTotal), InstantAvailable: \(balance.instantAvailableTotal), Pending: \(balance.pendingTotal)")
             return balance
         } catch {
-            let rawResponse = String(data: data, encoding: .utf8) ?? "Unable to decode"
             logDebug("Failed to decode balance response: \(error)\nRaw: \(rawResponse)")
             throw StripeError.parseError(error.localizedDescription)
         }
@@ -145,12 +152,14 @@ class StripeAPIService {
     // MARK: - Sync Method
 
     /// Syncs balance from Stripe and saves to Core Data
+    /// Note: Risk reserves are NOT returned by Stripe's API and must be entered manually
     @MainActor
     func syncBalance(context: NSManagedObjectContext) async throws -> StripeSnapshot {
         let balance = try await fetchBalance()
 
         // Convert amounts from cents to dollars
-        let availableDecimal = Decimal(balance.availableTotal) / 100
+        // Use effectiveAvailable which prefers instant_available when available is 0
+        let availableDecimal = Decimal(balance.effectiveAvailable) / 100
         let pendingDecimal = Decimal(balance.pendingTotal) / 100
         let reserveDecimal = Decimal(balance.connectReservedTotal) / 100
 
@@ -165,6 +174,7 @@ class StripeAPIService {
         try context.save()
 
         logDebug("Stripe balance synced - Available: \(availableDecimal), Pending: \(pendingDecimal), Reserve: \(reserveDecimal)")
+        logDebug("NOTE: Risk reserves are not included in API response - enter manually if applicable")
 
         return snapshot
     }
@@ -190,13 +200,20 @@ class StripeAPIService {
 struct StripeBalance: Decodable {
     let available: [StripeBalanceAmount]
     let pending: [StripeBalanceAmount]
+    let instantAvailable: [StripeBalanceAmount]?
     let connectReserved: [StripeBalanceAmount]?
     let livemode: Bool?
     let object: String?
 
     /// Total available balance in cents (USD only, or first currency)
+    /// Note: This is often 0 when Stripe has a risk reserve
     var availableTotal: Int {
         available.first(where: { $0.currency == "usd" })?.amount ?? available.first?.amount ?? 0
+    }
+
+    /// Total instant available balance in cents - this is what can actually be withdrawn
+    var instantAvailableTotal: Int {
+        instantAvailable?.first(where: { $0.currency == "usd" })?.amount ?? instantAvailable?.first?.amount ?? 0
     }
 
     /// Total pending balance in cents (USD only, or first currency)
@@ -209,7 +226,13 @@ struct StripeBalance: Decodable {
         connectReserved?.first(where: { $0.currency == "usd" })?.amount ?? connectReserved?.first?.amount ?? 0
     }
 
+    /// Best "available" amount - uses instant_available if available is 0
+    var effectiveAvailable: Int {
+        availableTotal > 0 ? availableTotal : instantAvailableTotal
+    }
+
     /// Total holdback (pending + reserve) in cents
+    /// Note: Risk reserves are NOT included in the API - must be entered manually
     var holdbackTotal: Int {
         pendingTotal + connectReservedTotal
     }
