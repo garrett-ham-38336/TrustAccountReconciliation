@@ -1,0 +1,504 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		/* App Entry Point */
+		B1000001229A0001AAAAAAAA /* TrustAccountReconciliationApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2000001229A0001AAAAAAAA /* TrustAccountReconciliationApp.swift */; };
+		B1000002229A0001AAAAAAAA /* PersistenceController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2000002229A0001AAAAAAAA /* PersistenceController.swift */; };
+
+		/* Views */
+		B1100001229A0001AAAAAAAA /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2100001229A0001AAAAAAAA /* ContentView.swift */; };
+		B1100002229A0001AAAAAAAA /* DashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2100002229A0001AAAAAAAA /* DashboardView.swift */; };
+		B1100003229A0001AAAAAAAA /* OwnersView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2100003229A0001AAAAAAAA /* OwnersView.swift */; };
+		B1100004229A0001AAAAAAAA /* PropertiesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2100004229A0001AAAAAAAA /* PropertiesView.swift */; };
+		B1100005229A0001AAAAAAAA /* ReservationsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2100005229A0001AAAAAAAA /* ReservationsView.swift */; };
+		B1100006229A0001AAAAAAAA /* ReportsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2100006229A0001AAAAAAAA /* ReportsView.swift */; };
+		B1100007229A0001AAAAAAAA /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2100007229A0001AAAAAAAA /* SettingsView.swift */; };
+		B1100008229A0001AAAAAAAA /* ReconciliationHistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2100008229A0001AAAAAAAA /* ReconciliationHistoryView.swift */; };
+		B1100009229A0001AAAAAAAA /* ReconciliationWizardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2100009229A0001AAAAAAAA /* ReconciliationWizardView.swift */; };
+		B110000A229A0001AAAAAAAA /* GuestySyncView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B210000A229A0001AAAAAAAA /* GuestySyncView.swift */; };
+
+		/* Models */
+		B1200001229A0001AAAAAAAA /* Owner+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2200001229A0001AAAAAAAA /* Owner+Extensions.swift */; };
+		B1200002229A0001AAAAAAAA /* Property+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2200002229A0001AAAAAAAA /* Property+Extensions.swift */; };
+		B1200003229A0001AAAAAAAA /* Reservation+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2200003229A0001AAAAAAAA /* Reservation+Extensions.swift */; };
+		B1200004229A0001AAAAAAAA /* ReconciliationSnapshot+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2200004229A0001AAAAAAAA /* ReconciliationSnapshot+Extensions.swift */; };
+		B1200005229A0001AAAAAAAA /* StripeSnapshot+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2200005229A0001AAAAAAAA /* StripeSnapshot+Extensions.swift */; };
+		B1200006229A0001AAAAAAAA /* TaxJurisdiction+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2200006229A0001AAAAAAAA /* TaxJurisdiction+Extensions.swift */; };
+
+		/* Services */
+		B1300001229A0001AAAAAAAA /* TrustCalculationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2300001229A0001AAAAAAAA /* TrustCalculationService.swift */; };
+		B1300002229A0001AAAAAAAA /* GuestyAPIService.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2300002229A0001AAAAAAAA /* GuestyAPIService.swift */; };
+		B1300003229A0001AAAAAAAA /* KeychainService.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2300003229A0001AAAAAAAA /* KeychainService.swift */; };
+		B1300004229A0001AAAAAAAA /* StripeAPIService.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2300004229A0001AAAAAAAA /* StripeAPIService.swift */; };
+
+		/* Utilities */
+		B1400001229A0001AAAAAAAA /* AlertItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2400001229A0001AAAAAAAA /* AlertItem.swift */; };
+		B1400002229A0001AAAAAAAA /* Formatters.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2400002229A0001AAAAAAAA /* Formatters.swift */; };
+		B1400003229A0001AAAAAAAA /* ValidationError.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2400003229A0001AAAAAAAA /* ValidationError.swift */; };
+
+		/* Resources */
+		B1500001229A0001AAAAAAAA /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B2500001229A0001AAAAAAAA /* Assets.xcassets */; };
+		B1500002229A0001AAAAAAAA /* TrustAccountModel.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = B2500002229A0001AAAAAAAA /* TrustAccountModel.xcdatamodeld */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		/* Product */
+		B2000000229A0001AAAAAAAA /* TrustAccountReconciliation.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TrustAccountReconciliation.app; sourceTree = BUILT_PRODUCTS_DIR; };
+
+		/* App Entry Point */
+		B2000001229A0001AAAAAAAA /* TrustAccountReconciliationApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrustAccountReconciliationApp.swift; sourceTree = "<group>"; };
+		B2000002229A0001AAAAAAAA /* PersistenceController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PersistenceController.swift; sourceTree = "<group>"; };
+
+		/* Views */
+		B2100001229A0001AAAAAAAA /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		B2100002229A0001AAAAAAAA /* DashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardView.swift; sourceTree = "<group>"; };
+		B2100003229A0001AAAAAAAA /* OwnersView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OwnersView.swift; sourceTree = "<group>"; };
+		B2100004229A0001AAAAAAAA /* PropertiesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PropertiesView.swift; sourceTree = "<group>"; };
+		B2100005229A0001AAAAAAAA /* ReservationsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReservationsView.swift; sourceTree = "<group>"; };
+		B2100006229A0001AAAAAAAA /* ReportsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReportsView.swift; sourceTree = "<group>"; };
+		B2100007229A0001AAAAAAAA /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		B2100008229A0001AAAAAAAA /* ReconciliationHistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReconciliationHistoryView.swift; sourceTree = "<group>"; };
+		B2100009229A0001AAAAAAAA /* ReconciliationWizardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReconciliationWizardView.swift; sourceTree = "<group>"; };
+		B210000A229A0001AAAAAAAA /* GuestySyncView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GuestySyncView.swift; sourceTree = "<group>"; };
+
+		/* Models */
+		B2200001229A0001AAAAAAAA /* Owner+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Owner+Extensions.swift"; sourceTree = "<group>"; };
+		B2200002229A0001AAAAAAAA /* Property+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Property+Extensions.swift"; sourceTree = "<group>"; };
+		B2200003229A0001AAAAAAAA /* Reservation+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Reservation+Extensions.swift"; sourceTree = "<group>"; };
+		B2200004229A0001AAAAAAAA /* ReconciliationSnapshot+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ReconciliationSnapshot+Extensions.swift"; sourceTree = "<group>"; };
+		B2200005229A0001AAAAAAAA /* StripeSnapshot+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "StripeSnapshot+Extensions.swift"; sourceTree = "<group>"; };
+		B2200006229A0001AAAAAAAA /* TaxJurisdiction+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TaxJurisdiction+Extensions.swift"; sourceTree = "<group>"; };
+
+		/* Services */
+		B2300001229A0001AAAAAAAA /* TrustCalculationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrustCalculationService.swift; sourceTree = "<group>"; };
+		B2300002229A0001AAAAAAAA /* GuestyAPIService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GuestyAPIService.swift; sourceTree = "<group>"; };
+		B2300003229A0001AAAAAAAA /* KeychainService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainService.swift; sourceTree = "<group>"; };
+		B2300004229A0001AAAAAAAA /* StripeAPIService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StripeAPIService.swift; sourceTree = "<group>"; };
+
+		/* Utilities */
+		B2400001229A0001AAAAAAAA /* AlertItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlertItem.swift; sourceTree = "<group>"; };
+		B2400002229A0001AAAAAAAA /* Formatters.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Formatters.swift; sourceTree = "<group>"; };
+		B2400003229A0001AAAAAAAA /* ValidationError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ValidationError.swift; sourceTree = "<group>"; };
+
+		/* Resources */
+		B2500001229A0001AAAAAAAA /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+
+		/* Entitlements */
+		B2600001229A0001AAAAAAAA /* TrustAccountReconciliation.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = TrustAccountReconciliation.entitlements; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		B3000001229A0001AAAAAAAA /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		B4000001229A0001AAAAAAAA = {
+			isa = PBXGroup;
+			children = (
+				B4000002229A0001AAAAAAAA /* TrustAccountReconciliation */,
+				B4000003229A0001AAAAAAAA /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		B4000002229A0001AAAAAAAA /* TrustAccountReconciliation */ = {
+			isa = PBXGroup;
+			children = (
+				B2000001229A0001AAAAAAAA /* TrustAccountReconciliationApp.swift */,
+				B2000002229A0001AAAAAAAA /* PersistenceController.swift */,
+				B4000004229A0001AAAAAAAA /* Views */,
+				B4000005229A0001AAAAAAAA /* Models */,
+				B4000006229A0001AAAAAAAA /* Services */,
+				B4000007229A0001AAAAAAAA /* Utilities */,
+				B2500001229A0001AAAAAAAA /* Assets.xcassets */,
+				B2500002229A0001AAAAAAAA /* TrustAccountModel.xcdatamodeld */,
+				B2600001229A0001AAAAAAAA /* TrustAccountReconciliation.entitlements */,
+			);
+			path = TrustAccountReconciliation;
+			sourceTree = "<group>";
+		};
+		B4000003229A0001AAAAAAAA /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				B2000000229A0001AAAAAAAA /* TrustAccountReconciliation.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		B4000004229A0001AAAAAAAA /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				B2100001229A0001AAAAAAAA /* ContentView.swift */,
+				B2100002229A0001AAAAAAAA /* DashboardView.swift */,
+				B2100003229A0001AAAAAAAA /* OwnersView.swift */,
+				B2100004229A0001AAAAAAAA /* PropertiesView.swift */,
+				B2100005229A0001AAAAAAAA /* ReservationsView.swift */,
+				B2100006229A0001AAAAAAAA /* ReportsView.swift */,
+				B2100007229A0001AAAAAAAA /* SettingsView.swift */,
+				B2100008229A0001AAAAAAAA /* ReconciliationHistoryView.swift */,
+				B2100009229A0001AAAAAAAA /* ReconciliationWizardView.swift */,
+				B210000A229A0001AAAAAAAA /* GuestySyncView.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		B4000005229A0001AAAAAAAA /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				B2200001229A0001AAAAAAAA /* Owner+Extensions.swift */,
+				B2200002229A0001AAAAAAAA /* Property+Extensions.swift */,
+				B2200003229A0001AAAAAAAA /* Reservation+Extensions.swift */,
+				B2200004229A0001AAAAAAAA /* ReconciliationSnapshot+Extensions.swift */,
+				B2200005229A0001AAAAAAAA /* StripeSnapshot+Extensions.swift */,
+				B2200006229A0001AAAAAAAA /* TaxJurisdiction+Extensions.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		B4000006229A0001AAAAAAAA /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				B2300001229A0001AAAAAAAA /* TrustCalculationService.swift */,
+				B2300002229A0001AAAAAAAA /* GuestyAPIService.swift */,
+				B2300003229A0001AAAAAAAA /* KeychainService.swift */,
+				B2300004229A0001AAAAAAAA /* StripeAPIService.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		B4000007229A0001AAAAAAAA /* Utilities */ = {
+			isa = PBXGroup;
+			children = (
+				B2400001229A0001AAAAAAAA /* AlertItem.swift */,
+				B2400002229A0001AAAAAAAA /* Formatters.swift */,
+				B2400003229A0001AAAAAAAA /* ValidationError.swift */,
+			);
+			path = Utilities;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		B5000001229A0001AAAAAAAA /* TrustAccountReconciliation */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = B6000001229A0001AAAAAAAA /* Build configuration list for PBXNativeTarget "TrustAccountReconciliation" */;
+			buildPhases = (
+				B5000002229A0001AAAAAAAA /* Sources */,
+				B3000001229A0001AAAAAAAA /* Frameworks */,
+				B5000003229A0001AAAAAAAA /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = TrustAccountReconciliation;
+			productName = TrustAccountReconciliation;
+			productReference = B2000000229A0001AAAAAAAA /* TrustAccountReconciliation.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		B7000001229A0001AAAAAAAA /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1500;
+				LastUpgradeCheck = 1500;
+				TargetAttributes = {
+					B5000001229A0001AAAAAAAA = {
+						CreatedOnToolsVersion = 15.0;
+					};
+				};
+			};
+			buildConfigurationList = B6000002229A0001AAAAAAAA /* Build configuration list for PBXProject "TrustAccountReconciliation" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = B4000001229A0001AAAAAAAA;
+			productRefGroup = B4000003229A0001AAAAAAAA /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				B5000001229A0001AAAAAAAA /* TrustAccountReconciliation */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		B5000003229A0001AAAAAAAA /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B1500001229A0001AAAAAAAA /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		B5000002229A0001AAAAAAAA /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B1000001229A0001AAAAAAAA /* TrustAccountReconciliationApp.swift in Sources */,
+				B1000002229A0001AAAAAAAA /* PersistenceController.swift in Sources */,
+				B1100001229A0001AAAAAAAA /* ContentView.swift in Sources */,
+				B1100002229A0001AAAAAAAA /* DashboardView.swift in Sources */,
+				B1100003229A0001AAAAAAAA /* OwnersView.swift in Sources */,
+				B1100004229A0001AAAAAAAA /* PropertiesView.swift in Sources */,
+				B1100005229A0001AAAAAAAA /* ReservationsView.swift in Sources */,
+				B1100006229A0001AAAAAAAA /* ReportsView.swift in Sources */,
+				B1100007229A0001AAAAAAAA /* SettingsView.swift in Sources */,
+				B1100008229A0001AAAAAAAA /* ReconciliationHistoryView.swift in Sources */,
+				B1100009229A0001AAAAAAAA /* ReconciliationWizardView.swift in Sources */,
+				B110000A229A0001AAAAAAAA /* GuestySyncView.swift in Sources */,
+				B1200001229A0001AAAAAAAA /* Owner+Extensions.swift in Sources */,
+				B1200002229A0001AAAAAAAA /* Property+Extensions.swift in Sources */,
+				B1200003229A0001AAAAAAAA /* Reservation+Extensions.swift in Sources */,
+				B1200004229A0001AAAAAAAA /* ReconciliationSnapshot+Extensions.swift in Sources */,
+				B1200005229A0001AAAAAAAA /* StripeSnapshot+Extensions.swift in Sources */,
+				B1200006229A0001AAAAAAAA /* TaxJurisdiction+Extensions.swift in Sources */,
+				B1300001229A0001AAAAAAAA /* TrustCalculationService.swift in Sources */,
+				B1300002229A0001AAAAAAAA /* GuestyAPIService.swift in Sources */,
+				B1300003229A0001AAAAAAAA /* KeychainService.swift in Sources */,
+				B1300004229A0001AAAAAAAA /* StripeAPIService.swift in Sources */,
+				B1400001229A0001AAAAAAAA /* AlertItem.swift in Sources */,
+				B1400002229A0001AAAAAAAA /* Formatters.swift in Sources */,
+				B1400003229A0001AAAAAAAA /* ValidationError.swift in Sources */,
+				B1500002229A0001AAAAAAAA /* TrustAccountModel.xcdatamodeld in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		B8000001229A0001AAAAAAAA /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		B8000002229A0001AAAAAAAA /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+			};
+			name = Release;
+		};
+		B8000003229A0001AAAAAAAA /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = TrustAccountReconciliation/TrustAccountReconciliation.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "";
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.finance";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.example.TrustAccountReconciliation;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		B8000004229A0001AAAAAAAA /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = TrustAccountReconciliation/TrustAccountReconciliation.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "";
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.finance";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.example.TrustAccountReconciliation;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		B6000001229A0001AAAAAAAA /* Build configuration list for PBXNativeTarget "TrustAccountReconciliation" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				B8000003229A0001AAAAAAAA /* Debug */,
+				B8000004229A0001AAAAAAAA /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		B6000002229A0001AAAAAAAA /* Build configuration list for PBXProject "TrustAccountReconciliation" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				B8000001229A0001AAAAAAAA /* Debug */,
+				B8000002229A0001AAAAAAAA /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCVersionGroup section */
+		B2500002229A0001AAAAAAAA /* TrustAccountModel.xcdatamodeld */ = {
+			isa = XCVersionGroup;
+			children = (
+				B2500003229A0001AAAAAAAA /* TrustAccountModel.xcdatamodel */,
+			);
+			currentVersion = B2500003229A0001AAAAAAAA /* TrustAccountModel.xcdatamodel */;
+			path = TrustAccountModel.xcdatamodeld;
+			sourceTree = "<group>";
+			versionGroupType = wrapper.xcdatamodel;
+		};
+		B2500003229A0001AAAAAAAA /* TrustAccountModel.xcdatamodel */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = wrapper.xcdatamodel;
+			path = TrustAccountModel.xcdatamodel;
+			sourceTree = "<group>";
+		};
+/* End XCVersionGroup section */
+	};
+	rootObject = B7000001229A0001AAAAAAAA /* Project object */;
+}

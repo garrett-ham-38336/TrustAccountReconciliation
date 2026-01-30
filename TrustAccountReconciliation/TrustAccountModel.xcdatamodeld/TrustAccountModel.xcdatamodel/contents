@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<model type="com.apple.IDECoreDataModeler.DataModel" documentVersion="1.0" lastSavedToolsVersion="22522" systemVersion="24A335" minimumToolsVersion="Automatic" sourceLanguage="Swift" usedWithSwiftData="NO" userDefinedModelVersionIdentifier="2.0">
+
+    <!-- OWNER ENTITY: Property owner -->
+    <entity name="Owner" representedClassName="Owner" syncable="YES" codeGenerationType="class">
+        <attribute name="id" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="name" attributeType="String"/>
+        <attribute name="email" optional="YES" attributeType="String"/>
+        <attribute name="phone" optional="YES" attributeType="String"/>
+        <attribute name="lastPayoutDate" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="payoutFrequency" optional="YES" attributeType="String" defaultValueString="monthly"/>
+        <attribute name="managementFeePercent" attributeType="Decimal" defaultValueString="20"/>
+        <attribute name="isActive" attributeType="Boolean" defaultValueString="YES" usesScalarValueType="YES"/>
+        <attribute name="notes" optional="YES" attributeType="String"/>
+        <attribute name="createdAt" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="updatedAt" attributeType="Date" usesScalarValueType="NO"/>
+        <relationship name="properties" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="Property" inverseName="owner" inverseEntity="Property"/>
+    </entity>
+
+    <!-- PROPERTY ENTITY: Rental property -->
+    <entity name="Property" representedClassName="Property" syncable="YES" codeGenerationType="class">
+        <attribute name="id" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="guestyListingId" optional="YES" attributeType="String"/>
+        <attribute name="name" attributeType="String"/>
+        <attribute name="address" optional="YES" attributeType="String"/>
+        <attribute name="city" optional="YES" attributeType="String"/>
+        <attribute name="state" optional="YES" attributeType="String" defaultValueString="AR"/>
+        <attribute name="zipCode" optional="YES" attributeType="String"/>
+        <attribute name="managementFeePercent" optional="YES" attributeType="Decimal"/>
+        <attribute name="isActive" attributeType="Boolean" defaultValueString="YES" usesScalarValueType="YES"/>
+        <attribute name="notes" optional="YES" attributeType="String"/>
+        <attribute name="createdAt" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="updatedAt" attributeType="Date" usesScalarValueType="NO"/>
+        <relationship name="owner" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Owner" inverseName="properties" inverseEntity="Owner"/>
+        <relationship name="reservations" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="Reservation" inverseName="property" inverseEntity="Reservation"/>
+        <relationship name="taxJurisdictions" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="TaxJurisdiction" inverseName="properties" inverseEntity="TaxJurisdiction"/>
+    </entity>
+
+    <!-- RESERVATION ENTITY: Guest reservation/booking -->
+    <entity name="Reservation" representedClassName="Reservation" syncable="YES" codeGenerationType="class">
+        <attribute name="id" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="guestyReservationId" optional="YES" attributeType="String"/>
+        <attribute name="confirmationCode" optional="YES" attributeType="String"/>
+        <attribute name="guestName" attributeType="String"/>
+        <attribute name="guestEmail" optional="YES" attributeType="String"/>
+        <attribute name="guestPhone" optional="YES" attributeType="String"/>
+        <attribute name="checkInDate" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="checkOutDate" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="nightCount" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="status" attributeType="String" defaultValueString="confirmed"/>
+        <attribute name="source" optional="YES" attributeType="String"/>
+
+        <!-- Financial breakdown -->
+        <attribute name="totalAmount" attributeType="Decimal" defaultValueString="0.0"/>
+        <attribute name="accommodationFare" attributeType="Decimal" defaultValueString="0.0"/>
+        <attribute name="cleaningFee" attributeType="Decimal" defaultValueString="0.0"/>
+        <attribute name="guestServiceFee" optional="YES" attributeType="Decimal" defaultValueString="0.0"/>
+        <attribute name="hostServiceFee" optional="YES" attributeType="Decimal" defaultValueString="0.0"/>
+        <attribute name="taxAmount" attributeType="Decimal" defaultValueString="0.0"/>
+
+        <!-- Payment tracking -->
+        <attribute name="depositReceived" attributeType="Decimal" defaultValueString="0.0"/>
+        <attribute name="depositReceivedDate" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="isFullyPaid" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
+
+        <!-- Calculated owner share (total - fees - taxes - management fee) -->
+        <attribute name="ownerPayout" attributeType="Decimal" defaultValueString="0.0"/>
+        <attribute name="managementFee" attributeType="Decimal" defaultValueString="0.0"/>
+
+        <!-- Payout/Tax tracking -->
+        <attribute name="ownerPaidOut" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
+        <attribute name="ownerPaidOutDate" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="taxRemitted" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
+        <attribute name="taxRemittedDate" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+
+        <attribute name="isCancelled" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
+        <attribute name="cancellationDate" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="refundAmount" attributeType="Decimal" defaultValueString="0.0"/>
+
+        <attribute name="notes" optional="YES" attributeType="String"/>
+        <attribute name="createdAt" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="updatedAt" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="lastSyncedAt" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+
+        <relationship name="property" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Property" inverseName="reservations" inverseEntity="Property"/>
+    </entity>
+
+    <!-- TAX JURISDICTION ENTITY: Tax rates and remittance tracking -->
+    <entity name="TaxJurisdiction" representedClassName="TaxJurisdiction" syncable="YES" codeGenerationType="class">
+        <attribute name="id" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="name" attributeType="String"/>
+        <attribute name="taxType" attributeType="String" defaultValueString="occupancy"/>
+        <attribute name="taxRate" attributeType="Decimal" defaultValueString="0.0"/>
+        <attribute name="lastRemittanceDate" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="remittanceFrequency" optional="YES" attributeType="String" defaultValueString="monthly"/>
+        <attribute name="remittanceDueDay" attributeType="Integer 16" defaultValueString="20" usesScalarValueType="YES"/>
+        <attribute name="isActive" attributeType="Boolean" defaultValueString="YES" usesScalarValueType="YES"/>
+        <attribute name="notes" optional="YES" attributeType="String"/>
+        <attribute name="createdAt" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="updatedAt" attributeType="Date" usesScalarValueType="NO"/>
+        <relationship name="properties" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="Property" inverseName="taxJurisdictions" inverseEntity="Property"/>
+    </entity>
+
+    <!-- RECONCILIATION SNAPSHOT ENTITY: Point-in-time reconciliation -->
+    <entity name="ReconciliationSnapshot" representedClassName="ReconciliationSnapshot" syncable="YES" codeGenerationType="class">
+        <attribute name="id" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="reconciliationDate" attributeType="Date" usesScalarValueType="NO"/>
+
+        <!-- User-entered values -->
+        <attribute name="bankBalance" attributeType="Decimal" defaultValueString="0.0"/>
+        <attribute name="stripeHoldback" attributeType="Decimal" defaultValueString="0.0"/>
+
+        <!-- Calculated values (stored for historical reference) -->
+        <attribute name="futureDeposits" attributeType="Decimal" defaultValueString="0.0"/>
+        <attribute name="unpaidOwnerPayouts" attributeType="Decimal" defaultValueString="0.0"/>
+        <attribute name="unpaidTaxes" attributeType="Decimal" defaultValueString="0.0"/>
+        <attribute name="expectedBalance" attributeType="Decimal" defaultValueString="0.0"/>
+        <attribute name="actualBalance" attributeType="Decimal" defaultValueString="0.0"/>
+        <attribute name="variance" attributeType="Decimal" defaultValueString="0.0"/>
+
+        <!-- Counts for reference -->
+        <attribute name="futureReservationCount" attributeType="Integer 32" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="unpaidPayoutCount" attributeType="Integer 32" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="unpaidTaxReservationCount" attributeType="Integer 32" defaultValueString="0" usesScalarValueType="YES"/>
+
+        <attribute name="status" attributeType="String" defaultValueString="draft"/>
+        <attribute name="isBalanced" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
+        <attribute name="notes" optional="YES" attributeType="String"/>
+        <attribute name="createdAt" attributeType="Date" usesScalarValueType="NO"/>
+
+        <!-- JSON storage for drill-down data at time of reconciliation -->
+        <attribute name="futureReservationsData" optional="YES" attributeType="Binary"/>
+        <attribute name="unpaidPayoutsData" optional="YES" attributeType="Binary"/>
+        <attribute name="unpaidTaxesData" optional="YES" attributeType="Binary"/>
+
+        <relationship name="stripeSnapshot" optional="YES" maxCount="1" deletionRule="Cascade" destinationEntity="StripeSnapshot" inverseName="reconciliation" inverseEntity="StripeSnapshot"/>
+    </entity>
+
+    <!-- STRIPE SNAPSHOT ENTITY: Stripe balance at reconciliation time -->
+    <entity name="StripeSnapshot" representedClassName="StripeSnapshot" syncable="YES" codeGenerationType="class">
+        <attribute name="id" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="snapshotDate" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="availableBalance" attributeType="Decimal" defaultValueString="0.0"/>
+        <attribute name="pendingBalance" attributeType="Decimal" defaultValueString="0.0"/>
+        <attribute name="reserveBalance" attributeType="Decimal" defaultValueString="0.0"/>
+        <attribute name="totalBalance" attributeType="Decimal" defaultValueString="0.0"/>
+        <attribute name="notes" optional="YES" attributeType="String"/>
+        <attribute name="createdAt" attributeType="Date" usesScalarValueType="NO"/>
+        <relationship name="reconciliation" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="ReconciliationSnapshot" inverseName="stripeSnapshot" inverseEntity="ReconciliationSnapshot"/>
+    </entity>
+
+    <!-- APP SETTINGS ENTITY: Configuration and credentials reference -->
+    <entity name="AppSettings" representedClassName="AppSettings" syncable="YES" codeGenerationType="class">
+        <attribute name="id" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="companyName" optional="YES" attributeType="String"/>
+        <attribute name="varianceThreshold" attributeType="Decimal" defaultValueString="100"/>
+        <attribute name="reconciliationReminderDays" attributeType="Integer 16" defaultValueString="7" usesScalarValueType="YES"/>
+        <attribute name="defaultManagementFeePercent" attributeType="Decimal" defaultValueString="20"/>
+        <attribute name="guestyIntegrationEnabled" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
+        <attribute name="lastGuestySyncDate" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="createdAt" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="updatedAt" attributeType="Date" usesScalarValueType="NO"/>
+    </entity>
+
+    <!-- SYNC LOG ENTITY: Track Guesty sync operations -->
+    <entity name="SyncLog" representedClassName="SyncLog" syncable="YES" codeGenerationType="class">
+        <attribute name="id" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="syncDate" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="syncType" attributeType="String" defaultValueString="full"/>
+        <attribute name="recordsCreated" attributeType="Integer 32" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="recordsUpdated" attributeType="Integer 32" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="recordsFailed" attributeType="Integer 32" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="status" attributeType="String" defaultValueString="success"/>
+        <attribute name="errorMessage" optional="YES" attributeType="String"/>
+        <attribute name="durationSeconds" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES"/>
+    </entity>
+
+</model>
