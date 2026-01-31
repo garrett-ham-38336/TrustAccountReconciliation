@@ -56,27 +56,9 @@ struct OwnersView: View {
     }
 
     private var emptyListView: some View {
-        VStack(spacing: 16) {
-            Image(systemName: "person.2")
-                .font(.system(size: 48))
-                .foregroundColor(.secondary)
-
-            Text("No Owners")
-                .font(.headline)
-                .foregroundColor(.secondary)
-
-            Text("Add property owners to track their payouts.")
-                .font(.subheadline)
-                .foregroundColor(.secondary)
-                .multilineTextAlignment(.center)
-
-            Button("Add Owner") {
-                showingAddOwner = true
-            }
-            .buttonStyle(.borderedProminent)
+        EmptyStateView.owners {
+            showingAddOwner = true
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .padding()
     }
 
     private var emptyDetailView: some View {

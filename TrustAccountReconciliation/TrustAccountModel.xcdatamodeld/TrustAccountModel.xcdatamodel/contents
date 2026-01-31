@@ -178,4 +178,19 @@
         <attribute name="durationSeconds" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES"/>
     </entity>
 
+    <!-- AUDIT LOG ENTITY: Track all data changes for compliance -->
+    <entity name="AuditLog" representedClassName="AuditLog" syncable="YES" codeGenerationType="class">
+        <attribute name="id" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="timestamp" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="action" attributeType="String"/>
+        <attribute name="entityType" attributeType="String"/>
+        <attribute name="entityId" optional="YES" attributeType="String"/>
+        <attribute name="entityName" optional="YES" attributeType="String"/>
+        <attribute name="fieldName" optional="YES" attributeType="String"/>
+        <attribute name="oldValue" optional="YES" attributeType="String"/>
+        <attribute name="newValue" optional="YES" attributeType="String"/>
+        <attribute name="userId" optional="YES" attributeType="String"/>
+        <attribute name="notes" optional="YES" attributeType="String"/>
+    </entity>
+
 </model>

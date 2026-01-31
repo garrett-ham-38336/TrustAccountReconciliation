@@ -9,6 +9,8 @@ struct ReconciliationWizardView: View {
     @State private var currentStep = 0
     @State private var bankBalance: Decimal = 0
     @State private var stripeHoldback: Decimal = 0
+    @State private var bankBalanceError: String?
+    @State private var stripeHoldbackError: String?
     @State private var calculation: TrustCalculationService.TrustCalculation?
     @State private var notes: String = ""
     @State private var isSyncing = false
@@ -233,6 +235,15 @@ struct ReconciliationWizardView: View {
                     .font(.title)
                     .multilineTextAlignment(.center)
                     .frame(width: 250)
+                    .onChange(of: bankBalance) {
+                        validateBankBalance()
+                    }
+
+                if let error = bankBalanceError {
+                    Text(error)
+                        .font(.caption)
+                        .foregroundColor(.red)
+                }
             }
             .padding()
             .background(Color(NSColor.controlBackgroundColor))
@@ -369,6 +380,15 @@ struct ReconciliationWizardView: View {
                     .font(.title)
                     .multilineTextAlignment(.center)
                     .frame(width: 250)
+                    .onChange(of: stripeHoldback) {
+                        validateStripeHoldback()
+                    }
+
+                if let error = stripeHoldbackError {
+                    Text(error)
+                        .font(.caption)
+                        .foregroundColor(.red)
+                }
 
                 Text("Pending payouts + Reserve balance from Stripe")
                     .font(.caption)
@@ -450,6 +470,9 @@ struct ReconciliationWizardView: View {
 
                     // Calculation breakdown
                     calculationBreakdown(calc)
+
+                    // Three-way reconciliation
+                    threeWayReconciliation(calc)
 
                     // Drill-down sections
                     drillDownSections(calc)
@@ -537,6 +560,108 @@ struct ReconciliationWizardView: View {
                         .font(.subheadline)
                         .fontWeight(.bold)
                         .foregroundColor(calc.isBalanced ? .green : .red)
+                }
+            }
+            .padding()
+            .background(Color(NSColor.controlBackgroundColor))
+            .cornerRadius(8)
+        }
+    }
+
+    private func threeWayReconciliation(_ calc: TrustCalculationService.TrustCalculation) -> some View {
+        VStack(alignment: .leading, spacing: 16) {
+            HStack {
+                Text("Three-Way Reconciliation")
+                    .font(.headline)
+                Spacer()
+                Image(systemName: calc.isThreeWayBalanced ? "checkmark.circle.fill" : "exclamationmark.triangle.fill")
+                    .foregroundColor(calc.isThreeWayBalanced ? .green : .orange)
+            }
+
+            VStack(spacing: 12) {
+                // 1. Cash Balance
+                HStack {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("1. Total Cash")
+                            .font(.subheadline)
+                            .fontWeight(.medium)
+                        Text("Bank + Stripe Holdback")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                    Spacer()
+                    Text(calc.actualBalance.asCurrency)
+                        .font(.subheadline)
+                        .fontWeight(.semibold)
+                        .foregroundColor(.blue)
+                }
+
+                Divider()
+
+                // 2. Ledger Balance
+                HStack {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("2. Expected Balance")
+                            .font(.subheadline)
+                            .fontWeight(.medium)
+                        Text("From calculations above")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                    Spacer()
+                    VStack(alignment: .trailing, spacing: 2) {
+                        Text(calc.expectedBalance.asCurrency)
+                            .font(.subheadline)
+                            .fontWeight(.semibold)
+                        if abs(calc.variance) >= 1 {
+                            Text("Variance: \(calc.variance.asCurrency)")
+                                .font(.caption)
+                                .foregroundColor(calc.variance > 0 ? .green : .red)
+                        }
+                    }
+                }
+
+                Divider()
+
+                // 3. Owner Balances
+                HStack {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("3. Owner Balances")
+                            .font(.subheadline)
+                            .fontWeight(.medium)
+                        Text("\(calc.ownerPayoutBreakdown.count) owners with unpaid balances")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                    Spacer()
+                    Text(calc.totalOwnerBalances.asCurrency)
+                        .font(.subheadline)
+                        .fontWeight(.semibold)
+                        .foregroundColor(.purple)
+                }
+
+                // Owner breakdown (expandable)
+                if !calc.ownerPayoutBreakdown.isEmpty {
+                    DisclosureGroup {
+                        ForEach(calc.ownerPayoutBreakdown) { owner in
+                            HStack {
+                                Text(owner.ownerName)
+                                    .font(.caption)
+                                Text("(\(owner.reservationCount) res)")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                                Spacer()
+                                Text(owner.totalUnpaid.asCurrency)
+                                    .font(.caption)
+                                    .fontWeight(.medium)
+                            }
+                            .padding(.vertical, 2)
+                        }
+                    } label: {
+                        Text("View by owner")
+                            .font(.caption)
+                            .foregroundColor(.blue)
+                    }
                 }
             }
             .padding()
@@ -713,13 +838,19 @@ struct ReconciliationWizardView: View {
 
             if currentStep < steps.count - 1 {
                 Button("Next") {
+                    if currentStep == 1 {
+                        validateBankBalance()
+                    }
                     if currentStep == 2 {
+                        validateStripeHoldback()
                         performCalculation()
                     }
-                    withAnimation { currentStep += 1 }
+                    if !hasValidationErrors {
+                        withAnimation { currentStep += 1 }
+                    }
                 }
                 .buttonStyle(.borderedProminent)
-                .disabled(currentStep == 0 && isSyncing)
+                .disabled((currentStep == 0 && isSyncing) || (currentStep == 1 && bankBalanceError != nil) || (currentStep == 2 && stripeHoldbackError != nil))
             } else {
                 Button("Save & Close") {
                     saveReconciliation()
@@ -741,6 +872,22 @@ struct ReconciliationWizardView: View {
             self.error = error
             showingError = true
         }
+    }
+
+    // MARK: - Validation
+
+    private func validateBankBalance() {
+        let result = InputValidation.validateBankBalance(bankBalance)
+        bankBalanceError = result.errorMessage
+    }
+
+    private func validateStripeHoldback() {
+        let result = InputValidation.validateStripeHoldback(stripeHoldback)
+        stripeHoldbackError = result.errorMessage
+    }
+
+    private var hasValidationErrors: Bool {
+        bankBalanceError != nil || stripeHoldbackError != nil
     }
 }
 

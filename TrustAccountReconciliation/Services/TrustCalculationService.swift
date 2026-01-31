@@ -79,6 +79,9 @@ class TrustCalculationService {
         var unpaidPayoutReservations: [ReservationSummary]
         var unpaidTaxReservations: [ReservationSummary]
 
+        // Three-way reconciliation: Owner-level breakdown
+        var ownerPayoutBreakdown: [OwnerPayoutSummary]
+
         /// Expected trust balance: Future Deposits - Stripe Holdback + Unpaid Payouts + Unpaid Taxes + Maintenance Reserves
         var expectedBalance: Decimal {
             futureDeposits - stripeHoldback + unpaidOwnerPayouts + unpaidTaxes + maintenanceReserves
@@ -89,14 +92,30 @@ class TrustCalculationService {
             bankBalance + stripeHoldback
         }
 
+        /// Sum of all owner balances (from owner-level breakdown)
+        var totalOwnerBalances: Decimal {
+            ownerPayoutBreakdown.reduce(Decimal(0)) { $0 + $1.totalUnpaid }
+        }
+
         /// Variance between expected and actual
         var variance: Decimal {
             actualBalance - expectedBalance
         }
 
+        /// Variance between ledger owner payouts and owner-level sum
+        /// Should be zero if all data is consistent
+        var ownerReconciliationVariance: Decimal {
+            unpaidOwnerPayouts - totalOwnerBalances
+        }
+
         /// Whether the account is balanced (within tolerance)
         var isBalanced: Bool {
             abs(variance) < 1.00  // $1 tolerance for rounding
+        }
+
+        /// Whether all three balances reconcile
+        var isThreeWayBalanced: Bool {
+            isBalanced && abs(ownerReconciliationVariance) < 1.00
         }
 
         /// Formatted summary for display
@@ -115,6 +134,26 @@ class TrustCalculationService {
             Actual Balance (Bank + Stripe): \(actualBalance.asCurrency)
 
             Variance: \(variance.asCurrency)
+            """
+        }
+
+        /// Three-way reconciliation summary
+        var threeWaySummaryText: String {
+            """
+            Three-Way Reconciliation:
+
+            1. Bank Balance: \(bankBalance.asCurrency)
+               + Stripe Holdback: \(stripeHoldback.asCurrency)
+               = Total Cash: \(actualBalance.asCurrency)
+
+            2. Ledger Balance (Expected): \(expectedBalance.asCurrency)
+               Variance from Cash: \(variance.asCurrency)
+
+            3. Owner Balances Total: \(totalOwnerBalances.asCurrency)
+               (\(ownerPayoutBreakdown.count) owners with unpaid balances)
+               Variance from Ledger: \(ownerReconciliationVariance.asCurrency)
+
+            Status: \(isThreeWayBalanced ? "✓ BALANCED" : "⚠ VARIANCE DETECTED")
             """
         }
     }
@@ -155,7 +194,7 @@ class TrustCalculationService {
 
     // MARK: - Calculate Expected Balance
 
-    /// Performs the full trust balance calculation
+    /// Performs the full trust balance calculation with three-way reconciliation
     func calculateExpectedBalance(
         bankBalance: Decimal,
         stripeHoldback: Decimal
@@ -175,6 +214,9 @@ class TrustCalculationService {
         // 4. Get maintenance reserves from settings
         let maintenanceReserves = fetchMaintenanceReserves()
 
+        // 5. Get owner-level breakdown for three-way reconciliation
+        let ownerBreakdown = getOwnerPayoutBreakdown()
+
         return TrustCalculation(
             calculationDate: Date(),
             bankBalance: bankBalance,
@@ -188,7 +230,8 @@ class TrustCalculationService {
             unpaidTaxReservationCount: unpaidTaxRes.count,
             futureReservations: futureRes,
             unpaidPayoutReservations: unpaidPayoutRes,
-            unpaidTaxReservations: unpaidTaxRes
+            unpaidTaxReservations: unpaidTaxRes,
+            ownerPayoutBreakdown: ownerBreakdown
         )
     }
 

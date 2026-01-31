@@ -105,22 +105,20 @@ struct ReservationsView: View {
     }
 
     private var emptyListView: some View {
-        VStack(spacing: 16) {
-            Image(systemName: "calendar.badge.exclamationmark")
-                .font(.system(size: 48))
-                .foregroundColor(.secondary)
-
-            Text("No Reservations")
-                .font(.headline)
-                .foregroundColor(.secondary)
-
-            Text("Sync with Guesty to import your reservations.")
-                .font(.subheadline)
-                .foregroundColor(.secondary)
-                .multilineTextAlignment(.center)
+        Group {
+            if !searchText.isEmpty {
+                EmptyStateView.searchResults(query: searchText)
+            } else if filterStatus != .all {
+                EmptyStateView.filteredResults {
+                    filterStatus = .all
+                }
+            } else {
+                EmptyStateView.reservations(
+                    syncAction: { /* Trigger Guesty sync */ },
+                    addAction: nil
+                )
+            }
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .padding()
     }
 
     private var emptyDetailView: some View {

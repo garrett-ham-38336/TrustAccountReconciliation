@@ -80,27 +80,9 @@ struct ReconciliationHistoryView: View {
     }
 
     private var emptyListView: some View {
-        VStack(spacing: 16) {
-            Image(systemName: "checkmark.circle")
-                .font(.system(size: 48))
-                .foregroundColor(.secondary)
-
-            Text("No Reconciliations")
-                .font(.headline)
-                .foregroundColor(.secondary)
-
-            Text("Run your first reconciliation to start tracking your trust account balance.")
-                .font(.subheadline)
-                .foregroundColor(.secondary)
-                .multilineTextAlignment(.center)
-
-            Button("Start Reconciliation") {
-                showingNewReconciliation = true
-            }
-            .buttonStyle(.borderedProminent)
+        EmptyStateView.reconciliationHistory {
+            showingNewReconciliation = true
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .padding()
     }
 
     private var emptyDetailView: some View {

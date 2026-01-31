@@ -8,29 +8,8 @@ class KeychainService {
 
     private let serviceName = "com.trustaccountreconciliation"
 
-    // For development: use file-based storage instead of Keychain
-    private let useFileStorage = true
-    private var credentialsFileURL: URL {
-        let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
-        let appDir = appSupport.appendingPathComponent("TrustAccountReconciliation", isDirectory: true)
-        try? FileManager.default.createDirectory(at: appDir, withIntermediateDirectories: true)
-        return appDir.appendingPathComponent(".credentials.json")
-    }
-
-    private var fileCredentials: [String: String] {
-        get {
-            guard let data = try? Data(contentsOf: credentialsFileURL),
-                  let dict = try? JSONDecoder().decode([String: String].self, from: data) else {
-                return [:]
-            }
-            return dict
-        }
-        set {
-            if let data = try? JSONEncoder().encode(newValue) {
-                try? data.write(to: credentialsFileURL, options: .atomic)
-            }
-        }
-    }
+    // Use Keychain for secure credential storage (required for App Sandbox)
+    private let useFileStorage = false
 
     private init() {}
 
@@ -202,13 +181,6 @@ class KeychainService {
 
     /// Saves a string value to the keychain with a generic string key
     func save(key: String, value: String) throws {
-        if useFileStorage {
-            var creds = fileCredentials
-            creds[key] = value
-            fileCredentials = creds
-            return
-        }
-
         guard let data = value.data(using: .utf8) else {
             throw KeychainError.encodingFailed
         }
@@ -233,10 +205,6 @@ class KeychainService {
 
     /// Retrieves a string value from the keychain with a generic string key
     func retrieve(key: String) throws -> String? {
-        if useFileStorage {
-            return fileCredentials[key]
-        }
-
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: serviceName,
@@ -266,13 +234,6 @@ class KeychainService {
 
     /// Deletes a value from the keychain with a generic string key
     func delete(key: String) throws {
-        if useFileStorage {
-            var creds = fileCredentials
-            creds.removeValue(forKey: key)
-            fileCredentials = creds
-            return
-        }
-
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: serviceName,

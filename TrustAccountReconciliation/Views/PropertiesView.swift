@@ -56,27 +56,10 @@ struct PropertiesView: View {
     }
 
     private var emptyListView: some View {
-        VStack(spacing: 16) {
-            Image(systemName: "house")
-                .font(.system(size: 48))
-                .foregroundColor(.secondary)
-
-            Text("No Properties")
-                .font(.headline)
-                .foregroundColor(.secondary)
-
-            Text("Sync with Guesty to import your properties, or add them manually.")
-                .font(.subheadline)
-                .foregroundColor(.secondary)
-                .multilineTextAlignment(.center)
-
-            Button("Add Property") {
-                showingAddProperty = true
-            }
-            .buttonStyle(.borderedProminent)
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .padding()
+        EmptyStateView.properties(
+            addAction: { showingAddProperty = true },
+            syncAction: nil  // Could add Guesty sync action here
+        )
     }
 
     private var emptyDetailView: some View {

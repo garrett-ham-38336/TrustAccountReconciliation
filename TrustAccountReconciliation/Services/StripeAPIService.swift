@@ -6,16 +6,39 @@ class StripeAPIService {
     static let shared = StripeAPIService()
 
     private let baseURL = "https://api.stripe.com/v1"
-    private let session: URLSession
+    private var session: URLSession
 
     // Keychain key for secret key
     private let keychainSecretKey = "com.trustaccounting.stripe.secretKey"
+
+    /// Whether certificate pinning is enabled
+    private(set) var certificatePinningEnabled: Bool = false
 
     init() {
         let config = URLSessionConfiguration.default
         config.timeoutIntervalForRequest = 30
         config.timeoutIntervalForResource = 60
         self.session = URLSession(configuration: config)
+    }
+
+    /// Enables or disables certificate pinning for API requests
+    /// - Parameter enabled: Whether to enable certificate pinning
+    /// - Parameter strictMode: When true, connections fail if pins don't match. When false, falls back to system trust.
+    func setCertificatePinning(enabled: Bool, strictMode: Bool = false) {
+        certificatePinningEnabled = enabled
+
+        let config = URLSessionConfiguration.default
+        config.timeoutIntervalForRequest = 30
+        config.timeoutIntervalForResource = 60
+
+        if enabled {
+            let delegate = CertificatePinningConfiguration.createDefaultConfiguration(strictMode: strictMode)
+            session = URLSession(configuration: config, delegate: delegate, delegateQueue: nil)
+            logDebug("Certificate pinning enabled (strict: \(strictMode))")
+        } else {
+            session = URLSession(configuration: config)
+            logDebug("Certificate pinning disabled")
+        }
     }
 
     // MARK: - Credential Management
@@ -48,19 +71,35 @@ class StripeAPIService {
 
     // MARK: - API Methods
 
-    /// Fetches the current Stripe balance
+    /// Fetches the current Stripe balance with retry logic
     func fetchBalance() async throws -> StripeBalance {
         guard let secretKey = getCredentials(), !secretKey.isEmpty else {
             throw StripeError.notConfigured
         }
 
+        logDebug("Fetching balance from Stripe...")
+
+        let result = try await NetworkRetry.execute(
+            configuration: .default,
+            onRetry: { attempt, delay in
+                await MainActor.run {
+                    self.logDebug("Retry attempt \(attempt) for balance, waiting \(String(format: "%.1f", delay))s")
+                }
+            }
+        ) {
+            try await self.performBalanceRequest(secretKey: secretKey)
+        }
+
+        logDebug("Balance request succeeded after \(result.attempts) attempt(s)")
+        return result.value
+    }
+
+    private func performBalanceRequest(secretKey: String) async throws -> StripeBalance {
         let url = URL(string: "\(baseURL)/balance")!
         var request = URLRequest(url: url)
         request.httpMethod = "GET"
         request.setValue("Bearer \(secretKey)", forHTTPHeaderField: "Authorization")
         request.setValue("application/json", forHTTPHeaderField: "Accept")
-
-        logDebug("Fetching balance from Stripe...")
 
         let (data, response) = try await session.data(for: request)
 
@@ -153,7 +192,6 @@ class StripeAPIService {
 
     /// Syncs balance from Stripe and saves to Core Data
     /// Note: Risk reserves are NOT returned by Stripe's API and must be entered manually
-    @MainActor
     func syncBalance(context: NSManagedObjectContext) async throws -> StripeSnapshot {
         let balance = try await fetchBalance()
 
@@ -163,7 +201,7 @@ class StripeAPIService {
         let pendingDecimal = Decimal(balance.pendingTotal) / 100
         let reserveDecimal = Decimal(balance.connectReservedTotal) / 100
 
-        // Create snapshot
+        // Create snapshot - perform Core Data operations on context's thread
         let snapshot = StripeSnapshot.create(
             in: context,
             availableBalance: availableDecimal,
@@ -182,16 +220,7 @@ class StripeAPIService {
     // MARK: - Debug Logging
 
     private func logDebug(_ message: String) {
-        print("STRIPE DEBUG: \(message)")
-        let logURL = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
-            .appendingPathComponent("TrustAccountReconciliation/debug.log")
-        let timestamp = ISO8601DateFormatter().string(from: Date())
-        let logMessage = "[\(timestamp)] STRIPE: \(message)\n"
-        if let existing = try? String(contentsOf: logURL, encoding: .utf8) {
-            try? (existing + logMessage).write(to: logURL, atomically: true, encoding: .utf8)
-        } else {
-            try? logMessage.write(to: logURL, atomically: true, encoding: .utf8)
-        }
+        DebugLogger.shared.logStripe(message)
     }
 }
 

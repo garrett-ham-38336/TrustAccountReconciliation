@@ -6,7 +6,7 @@ class GuestyAPIService {
     static let shared = GuestyAPIService()
 
     private let baseURL = "https://open-api.guesty.com/v1"
-    private let session: URLSession
+    private var session: URLSession
 
     // Keychain keys
     private let keychainClientId = "com.trustaccounting.guesty.clientId"
@@ -17,6 +17,9 @@ class GuestyAPIService {
     private var accessToken: String?
     private var tokenExpiry: Date?
 
+    /// Whether certificate pinning is enabled
+    private(set) var certificatePinningEnabled: Bool = false
+
     init() {
         let config = URLSessionConfiguration.default
         config.timeoutIntervalForRequest = 30
@@ -25,6 +28,26 @@ class GuestyAPIService {
 
         // Load cached token
         loadCachedToken()
+    }
+
+    /// Enables or disables certificate pinning for API requests
+    /// - Parameter enabled: Whether to enable certificate pinning
+    /// - Parameter strictMode: When true, connections fail if pins don't match. When false, falls back to system trust.
+    func setCertificatePinning(enabled: Bool, strictMode: Bool = false) {
+        certificatePinningEnabled = enabled
+
+        let config = URLSessionConfiguration.default
+        config.timeoutIntervalForRequest = 30
+        config.timeoutIntervalForResource = 60
+
+        if enabled {
+            let delegate = CertificatePinningConfiguration.createDefaultConfiguration(strictMode: strictMode)
+            session = URLSession(configuration: config, delegate: delegate, delegateQueue: nil)
+            logDebug("Certificate pinning enabled (strict: \(strictMode))")
+        } else {
+            session = URLSession(configuration: config)
+            logDebug("Certificate pinning disabled")
+        }
     }
 
     // MARK: - Credential Management
@@ -135,6 +158,23 @@ class GuestyAPIService {
     // MARK: - API Requests
 
     private func makeRequest<T: Decodable>(_ endpoint: String, queryItems: [URLQueryItem]? = nil) async throws -> T {
+        // Use retry logic for network resilience
+        let result = try await NetworkRetry.execute(
+            configuration: .default,
+            onRetry: { attempt, delay in
+                await MainActor.run {
+                    self.logDebug("Retry attempt \(attempt) for \(endpoint), waiting \(String(format: "%.1f", delay))s")
+                }
+            }
+        ) {
+            try await self.performRequest(endpoint, queryItems: queryItems)
+        }
+
+        logDebug("Request to \(endpoint) succeeded after \(result.attempts) attempt(s)")
+        return result.value
+    }
+
+    private func performRequest<T: Decodable>(_ endpoint: String, queryItems: [URLQueryItem]? = nil) async throws -> T {
         let token = try await getValidToken()
 
         var components = URLComponents(string: "\(baseURL)\(endpoint)")!
@@ -159,7 +199,7 @@ class GuestyAPIService {
             if let errorResponse = try? JSONDecoder().decode(GuestyErrorResponse.self, from: data) {
                 throw GuestyError.apiError(errorResponse.message ?? rawResponse)
             }
-            throw GuestyError.apiError("HTTP \(httpResponse.statusCode): \(rawResponse)")
+            throw GuestyError.requestFailed(httpResponse.statusCode)
         }
 
         let decoder = JSONDecoder()
@@ -221,16 +261,7 @@ class GuestyAPIService {
     // MARK: - Debug Logging
 
     private func logDebug(_ message: String) {
-        print("GUESTY DEBUG: \(message)")
-        let logURL = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
-            .appendingPathComponent("TrustAccountReconciliation/debug.log")
-        let timestamp = ISO8601DateFormatter().string(from: Date())
-        let logMessage = "[\(timestamp)] \(message)\n"
-        if let existing = try? String(contentsOf: logURL, encoding: .utf8) {
-            try? (existing + logMessage).write(to: logURL, atomically: true, encoding: .utf8)
-        } else {
-            try? logMessage.write(to: logURL, atomically: true, encoding: .utf8)
-        }
+        DebugLogger.shared.logGuesty(message)
     }
 
     // MARK: - Fetch Listings (Properties)
@@ -410,18 +441,19 @@ class GuestyAPIService {
 
     // MARK: - Sync Data to Core Data
 
-    @MainActor
+    /// Syncs reservations from Guesty API to Core Data
+    /// Uses a background context for heavy operations to avoid blocking the main thread
     func syncReservations(context: NSManagedObjectContext, progressHandler: ((String) -> Void)? = nil) async throws -> SyncResult {
         var result = SyncResult()
         let startTime = Date()
 
         logDebug("Starting syncReservations")
-        progressHandler?("Fetching listings from Guesty...")
+        await MainActor.run { progressHandler?("Fetching listings from Guesty...") }
 
         // First sync listings (properties)
         let listings = try await fetchListings()
         logDebug("Processing \(listings.count) listings...")
-        progressHandler?("Processing \(listings.count) listings...")
+        await MainActor.run { progressHandler?("Processing \(listings.count) listings...") }
 
         for listing in listings {
             // Debug: log nickname and title for each listing
@@ -462,7 +494,7 @@ class GuestyAPIService {
             throw error
         }
 
-        progressHandler?("Fetching reservations from Guesty...")
+        await MainActor.run { progressHandler?("Fetching reservations from Guesty...") }
 
         // Fetch all reservations where checkout is 30+ days ago or later
         // This captures: past 30 days, in-progress, and all future reservations
@@ -471,7 +503,7 @@ class GuestyAPIService {
         let reservations = try await fetchReservations(checkOutFrom: thirtyDaysAgo)
 
         logDebug("Processing \(reservations.count) reservations...")
-        progressHandler?("Processing \(reservations.count) reservations...")
+        await MainActor.run { progressHandler?("Processing \(reservations.count) reservations...") }
 
         for (index, guestyRes) in reservations.enumerated() {
             if let existing = Reservation.findByGuestyId(guestyRes.id, in: context) {
@@ -539,7 +571,7 @@ class GuestyAPIService {
 
         result.duration = Date().timeIntervalSince(startTime)
         logDebug("Sync complete! Created: \(result.reservationsCreated), Updated: \(result.reservationsUpdated)")
-        progressHandler?("Sync complete! \(result.reservationsCreated + result.reservationsUpdated) reservations processed.")
+        await MainActor.run { progressHandler?("Sync complete! \(result.reservationsCreated + result.reservationsUpdated) reservations processed.") }
 
         return result
     }
